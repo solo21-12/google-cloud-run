@@ -91,3 +91,16 @@ func (rc *roleController) DeleteRole(c *gin.Context) {
 
 	c.IndentedJSON(http.StatusNoContent, gin.H{"message": "Role deleted successfully"})
 }
+
+func (rc *roleController) GetRoleUsers(c *gin.Context) {
+	id := c.Param("id")
+
+	users, errResp := rc.roleUsecase.GetRoleUsers(id, c.Request.Context())
+
+	if errResp != nil {
+		c.IndentedJSON(errResp.Code, gin.H{"error": errResp.Message})
+		return
+	}
+
+	c.IndentedJSON(http.StatusOK, users)
+}

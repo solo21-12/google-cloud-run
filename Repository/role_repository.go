@@ -95,3 +95,12 @@ func (r *roleRepository) DeleteRole(id string, ctx context.Context) *models.Erro
 	}
 	return nil
 }
+
+
+func (r *roleRepository) GetRoleUsers(role *models.Role, ctx context.Context) ([]*models.User, *models.ErrorResponse) {
+	var users []*models.User
+	if err := r.db.WithContext(ctx).Model(&role).Association("User").Find(&users); err != nil {
+		return nil, models.InternalServerError(err.Error())
+	}
+	return users, nil
+}

@@ -51,3 +51,12 @@ func (uc *roleUseCase) DeleteRole(id string, ctx context.Context) *models.ErrorR
 	}
 	return uc.roleRepository.DeleteRole(id, ctx)
 }
+
+
+func (uc *roleUseCase) GetRoleUsers(id string, ctx context.Context) ([]*models.User, *models.ErrorResponse) {
+	role, err := uc.checkRoleExists(id, ctx)
+	if err != nil {
+		return nil, err
+	}
+	return uc.roleRepository.GetRoleUsers(role, ctx)
+}

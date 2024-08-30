@@ -14,6 +14,7 @@ type RoleController interface {
 	CreateRole(c *gin.Context)
 	UpdateRole(c *gin.Context)
 	DeleteRole(c *gin.Context)
+	GetRoleUsers(c *gin.Context)
 }
 
 type RoleUseCase interface {
@@ -22,6 +23,7 @@ type RoleUseCase interface {
 	CreateRole(role dtos.RoleCreateRequest, ctx context.Context) (*dtos.RoleResponse, *models.ErrorResponse)
 	UpdateRole(id string, role dtos.RoleUpdateRequest, ctx context.Context) (*dtos.RoleResponse, *models.ErrorResponse)
 	DeleteRole(id string, ctx context.Context) *models.ErrorResponse
+	GetRoleUsers(id string, ctx context.Context) ([]*models.User, *models.ErrorResponse)
 }
 
 type RoleRepository interface {
@@ -30,4 +32,5 @@ type RoleRepository interface {
 	CreateRole(role dtos.RoleCreateRequest, ctx context.Context) (*dtos.RoleResponse, *models.ErrorResponse)
 	UpdateRole(id string, role dtos.RoleUpdateRequest, ctx context.Context) (*dtos.RoleResponse, *models.ErrorResponse)
 	DeleteRole(id string, ctx context.Context) *models.ErrorResponse
+	GetRoleUsers(role *models.Role, ctx context.Context) ([]*models.User, *models.ErrorResponse)
 }

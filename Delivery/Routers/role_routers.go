@@ -17,6 +17,7 @@ func NewRoleRouter(db *gorm.DB, env config.Env, router *gin.Engine) {
 
 	router.GET("/roles", roleHandler.GetAllRoles)
 	router.GET("/roles/:id", roleHandler.GetRoleById)
+	router.GET("/roles/:id/users", roleHandler.GetRoleUsers)
 	router.POST("/roles", roleHandler.CreateRole)
 	router.PUT("/roles/:id", roleHandler.UpdateRole)
 	router.DELETE("/roles/:id", roleHandler.DeleteRole)
