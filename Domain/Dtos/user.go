@@ -4,26 +4,29 @@ type UserCreateRequest struct {
 	Name     string `json:"name"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
+	Status   int    `json:"status"`
 }
 
 type UserUpdateRequest struct {
 	Name     string `json:"name"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
+	Status   int    `json:"status"`
 }
 
 type AddUserToGroupRequest struct {
-	UserId  uint `json:"user_id"`
-	GroupId uint `json:"group_id"`
+	UserId  string `json:"user_id"`
+	GroupId string `json:"group_id"`
 }
 
 type AddUserToRoleRequest struct {
-	UserId uint `json:"user_id"`
-	RoleId uint `json:"role_id"`
+	UserId string `json:"user_id"`
+	RoleId string `json:"role_id"`
 }
 
 type UserResponse struct {
-	UID   uint   `json:"uid"`
-	Name  string `json:"name"`
-	Email string `json:"email"`
+	UID    string   `json:"uid"`
+	Name   string `json:"name"`
+	Email  string `json:"email"`
+	Status int    `json:"status"`
 }

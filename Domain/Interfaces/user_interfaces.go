@@ -20,20 +20,20 @@ type UserController interface {
 
 type UserUseCase interface {
 	GetAllUsers(ctx context.Context) ([]*models.User, *models.ErrorResponse)
-	GetUserById(id int, ctx context.Context) (*models.User, *models.ErrorResponse)
+	GetUserById(id string, ctx context.Context) (*models.User, *models.ErrorResponse)
 	GetUsersGroup(ctx context.Context) ([]*models.Group, *models.ErrorResponse)
 	SearchUsers(query string, ctx context.Context) ([]*models.User, *models.ErrorResponse)
 	CreateUser(user dtos.UserCreateRequest, ctx context.Context) (*dtos.UserResponse, *models.ErrorResponse)
 	UpdateUser(user dtos.UserUpdateRequest, ctx context.Context) (*dtos.UserResponse, *models.ErrorResponse)
-	DeleteUser(id int, ctx context.Context) *models.ErrorResponse
+	DeleteUser(id string, ctx context.Context) *models.ErrorResponse
 }
 
 type UserRepository interface {
 	GetAllUsers(ctx context.Context) ([]*models.User, *models.ErrorResponse)
-	GetUserById(id int, ctx context.Context) (*models.User, *models.ErrorResponse)
-	GetUsersGroup(ctx context.Context) ([]*models.Group, *models.ErrorResponse)
+	GetUserById(id string, ctx context.Context) (*models.User, *models.ErrorResponse)
+	GetUsersGroups(uid string, ctx context.Context) ([]*models.Group, *models.ErrorResponse)
 	SearchUsers(query string, ctx context.Context) ([]*models.User, *models.ErrorResponse)
 	CreateUser(user dtos.UserCreateRequest, ctx context.Context) (*dtos.UserResponse, *models.ErrorResponse)
-	UpdateUser(user dtos.UserUpdateRequest, ctx context.Context) (*dtos.UserResponse, *models.ErrorResponse)
-	DeleteUser(id int, ctx context.Context) *models.ErrorResponse
+	UpdateUser(id string, user dtos.UserUpdateRequest, ctx context.Context) (*dtos.UserResponse, *models.ErrorResponse)
+	DeleteUser(id string, ctx context.Context) *models.ErrorResponse
 }
