@@ -66,8 +66,8 @@ func (uc *userUseCase) GetUsersGroup(id string, ctx context.Context) ([]*models.
 	return uc.userRepo.GetUsersGroups(id, ctx)
 }
 
-func (uc *userUseCase) SearchUsers(query string, ctx context.Context) ([]*models.User, *models.ErrorResponse) {
-	return uc.userRepo.SearchUsers(query, ctx)
+func (uc *userUseCase) SearchUsers(searchFields dtos.SearchFields, ctx context.Context) ([]*models.User, *models.ErrorResponse) {
+	return uc.userRepo.SearchUsers(searchFields, ctx)
 }
 
 func (uc *userUseCase) CreateUser(user dtos.UserCreateRequest, ctx context.Context) (*dtos.UserResponse, *models.ErrorResponse) {

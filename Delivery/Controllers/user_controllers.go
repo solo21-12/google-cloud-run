@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	dtos "github.com/google-run-code/Domain/Dtos"
@@ -19,11 +20,38 @@ func NewUserController(usecase interfaces.UserUseCase) interfaces.UserController
 	}
 }
 
-func (uc *userController) GetAllUsers(c *gin.Context) {
-	users, err := uc.usecase.GetAllUsers(c)
+func (uc *userController) GetUsers(c *gin.Context) {
+	searchFields := dtos.SearchFields{
+		Search:  c.Query("search"),
+		Limit:   10,
+		OrderBy: c.Query("orderby"),
+	}
 
-	if err != nil {
-		c.IndentedJSON(err.Code, gin.H{"error": err.Message})
+	if limitParam := c.Query("limit"); limitParam != "" {
+		if limit, err := strconv.Atoi(limitParam); err == nil {
+			if limit > 0 {
+				searchFields.Limit = limit
+			} else {
+				c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Limit must be greater than zero"})
+				return
+			}
+		} else {
+			c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Invalid limit value"})
+			return
+		}
+	}
+
+	var users []*models.User
+	var errResp *models.ErrorResponse
+
+	if searchFields.Search == "" && searchFields.OrderBy == "" {
+		users, errResp = uc.usecase.GetAllUsers(c.Request.Context())
+	} else {
+		users, errResp = uc.usecase.SearchUsers(searchFields, c.Request.Context())
+	}
+
+	if errResp != nil {
+		c.IndentedJSON(errResp.Code, gin.H{"error": errResp.Message})
 		return
 	}
 
@@ -32,6 +60,7 @@ func (uc *userController) GetAllUsers(c *gin.Context) {
 
 func (uc *userController) GetUserById(c *gin.Context) {
 	id := c.Param("id")
+
 	user, err := uc.usecase.GetUserById(id, c)
 
 	if err != nil {
@@ -52,10 +81,6 @@ func (uc *userController) GetUsersGroup(c *gin.Context) {
 	}
 
 	c.IndentedJSON(http.StatusOK, users)
-}
-
-func (uc *userController) SearchUsers(c *gin.Context) {
-	// Implement logic to search users
 }
 
 func (uc *userController) handleCreateOrUpdateUser(c *gin.Context, isUpdate bool) {

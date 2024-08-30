@@ -75,14 +75,25 @@ func (r *userRepository) GetUsersGroups(id string, ctx context.Context) ([]*mode
 	return user.Groups, nil
 }
 
-func (r *userRepository) SearchUsers(query string, ctx context.Context) ([]*models.User, *models.ErrorResponse) {
+func (repo *userRepository) SearchUsers(searchFields dtos.SearchFields, ctx context.Context) ([]*models.User, *models.ErrorResponse) {
 	var users []*models.User
-	if err := r.db.WithContext(ctx).Where("name LIKE ?", "%"+query+"%").Preload("Groups").Preload("Roles").Find(&users).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, models.NotFound("No users found")
-		}
+
+	query := repo.db.Where("name ILIKE ?", "%"+searchFields.Search+"%")
+
+	if searchFields.OrderBy != "" {
+		query = query.Order(searchFields.OrderBy)
+	}
+
+	if searchFields.Limit > 0 {
+		query = query.Limit(searchFields.Limit)
+	} else {
+		query = query.Limit(100)
+	}
+
+	if err := query.Find(&users).Error; err != nil {
 		return nil, models.InternalServerError(err.Error())
 	}
+
 	return users, nil
 }
 

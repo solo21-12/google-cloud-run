@@ -25,8 +25,14 @@ type AddUserToRoleRequest struct {
 }
 
 type UserResponse struct {
-	UID    string   `json:"uid"`
+	UID    string `json:"uid"`
 	Name   string `json:"name"`
 	Email  string `json:"email"`
 	Status int    `json:"status"`
+}
+
+type SearchFields struct {
+	Search  string `json:"search"`
+	Limit   int    `json:"limit"`
+	OrderBy string `json:"orderBy"`
 }

@@ -2,3 +2,4 @@ go.sum
 .air.toml
 tmp/
 .env
+makefile
