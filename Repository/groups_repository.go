@@ -21,6 +21,9 @@ func NewGroupRepository(db *gorm.DB) interfaces.GroupRepository {
 func (r *GroupRepository) GetAllGroups(ctx context.Context) ([]*models.Group, *models.ErrorResponse) {
 	var groups []*models.Group
 	if err := r.db.WithContext(ctx).Preload("Users").Find(&groups).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return []*models.Group{}, nil
+		}
 		return nil, models.InternalServerError(err.Error())
 	}
 	return groups, nil
@@ -33,6 +36,9 @@ func (r *GroupRepository) GetGroupById(id string, ctx context.Context) (*models.
 	}
 	var group models.Group
 	if err := r.db.WithContext(ctx).Preload("Users").First(&group, gId).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, models.NotFound("Group not found")
+		}
 		return nil, models.InternalServerError(err.Error())
 	}
 	return &group, nil
@@ -45,9 +51,10 @@ func (r *GroupRepository) GetGroupUsers(id string, ctx context.Context) ([]model
 		return nil, models.InternalServerError("Invalid UUID format")
 	}
 
-	if err := r.db.WithContext(ctx).
-		Preload("Users").
-		First(&group, gId).Error; err != nil {
+	if err := r.db.WithContext(ctx).Preload("Users").First(&group, gId).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, models.NotFound("Group not found")
+		}
 		return nil, models.InternalServerError(err.Error())
 	}
 
@@ -75,6 +82,7 @@ func (r *GroupRepository) UpdateGroup(id string, group dtos.GroupUpdateRequest, 
 	}
 	var existingGroup models.Group
 	if err := r.db.WithContext(ctx).First(&existingGroup, gId).Error; err != nil {
+
 		return nil, models.InternalServerError(err.Error())
 	}
 

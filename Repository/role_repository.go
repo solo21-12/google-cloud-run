@@ -21,6 +21,9 @@ func NewRoleRepository(db *gorm.DB) interfaces.RoleRepository {
 func (r *roleRepository) GetAllRoles(ctx context.Context) ([]*models.Role, *models.ErrorResponse) {
 	var roles []*models.Role
 	if err := r.db.WithContext(ctx).Preload("User").Find(&roles).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return []*models.Role{}, nil
+		}
 		return nil, models.InternalServerError(err.Error())
 	}
 	return roles, nil
@@ -33,6 +36,9 @@ func (r *roleRepository) GetRoleById(id string, ctx context.Context) (*models.Ro
 	}
 	var role models.Role
 	if err := r.db.WithContext(ctx).Preload("User").First(&role, roleId).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, models.NotFound("Role not found")
+		}
 		return nil, models.InternalServerError(err.Error())
 	}
 	return &role, nil

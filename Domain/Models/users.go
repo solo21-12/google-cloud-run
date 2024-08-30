@@ -7,6 +7,7 @@ type User struct {
 	Name   string    `json:"name"`
 	Email  string    `gorm:"unique" json:"email"`
 	Status int       `json:"status"`
+	Password string  `json:"password"`
 	Groups []*Group  `gorm:"many2many:user_groups;" json:"groups"`
 	Roles  []*Role   `gorm:"foreignKey:UserID" json:"roles"`
 }

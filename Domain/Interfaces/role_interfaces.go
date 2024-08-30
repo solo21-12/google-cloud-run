@@ -20,7 +20,7 @@ type RoleUseCase interface {
 	GetAllRoles(ctx context.Context) ([]*models.Role, *models.ErrorResponse)
 	GetRoleById(id string, ctx context.Context) (*models.Role, *models.ErrorResponse)
 	CreateRole(role dtos.RoleCreateRequest, ctx context.Context) (*dtos.RoleResponse, *models.ErrorResponse)
-	UpdateRole(role dtos.RoleUpdateRequest, ctx context.Context) (*dtos.RoleResponse, *models.ErrorResponse)
+	UpdateRole(id string, role dtos.RoleUpdateRequest, ctx context.Context) (*dtos.RoleResponse, *models.ErrorResponse)
 	DeleteRole(id string, ctx context.Context) *models.ErrorResponse
 }
 

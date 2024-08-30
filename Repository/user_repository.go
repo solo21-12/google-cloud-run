@@ -21,6 +21,9 @@ func NewUserRepository(db *gorm.DB) interfaces.UserRepository {
 func (r *userRepository) GetAllUsers(ctx context.Context) ([]*models.User, *models.ErrorResponse) {
 	var users []*models.User
 	if err := r.db.WithContext(ctx).Preload("Groups").Preload("Roles").Find(&users).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return []*models.User{}, nil
+		}
 		return nil, models.InternalServerError(err.Error())
 	}
 	return users, nil
@@ -33,8 +36,23 @@ func (r *userRepository) GetUserById(id string, ctx context.Context) (*models.Us
 	}
 	var user models.User
 	if err := r.db.WithContext(ctx).Preload("Groups").Preload("Roles").First(&user, uId).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, models.NotFound("User not found")
+		}
 		return nil, models.InternalServerError(err.Error())
 	}
+	return &user, nil
+}
+
+func (r *userRepository) GetUserByEmail(email string, ctx context.Context) (*models.User, *models.ErrorResponse) {
+	var user models.User
+	if err := r.db.WithContext(ctx).Preload("Groups").Preload("Roles").Where("email = ?", email).First(&user).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, models.NotFound("User not found")
+		}
+		return nil, models.InternalServerError(err.Error())
+	}
+
 	return &user, nil
 }
 
@@ -48,6 +66,9 @@ func (r *userRepository) GetUsersGroups(id string, ctx context.Context) ([]*mode
 	if err := r.db.WithContext(ctx).
 		Preload("Groups").
 		First(&user, uId).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, models.NotFound("User not found")
+		}
 		return nil, models.InternalServerError(err.Error())
 	}
 
@@ -57,6 +78,9 @@ func (r *userRepository) GetUsersGroups(id string, ctx context.Context) ([]*mode
 func (r *userRepository) SearchUsers(query string, ctx context.Context) ([]*models.User, *models.ErrorResponse) {
 	var users []*models.User
 	if err := r.db.WithContext(ctx).Where("name LIKE ?", "%"+query+"%").Preload("Groups").Preload("Roles").Find(&users).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, models.NotFound("No users found")
+		}
 		return nil, models.InternalServerError(err.Error())
 	}
 	return users, nil
@@ -80,13 +104,16 @@ func (r *userRepository) CreateUser(user dtos.UserCreateRequest, ctx context.Con
 	}, nil
 }
 
-func (r *userRepository) UpdateUser(id string, user dtos.UserUpdateRequest, ctx context.Context) (*dtos.UserResponse, *models.ErrorResponse) {
+func (r *userRepository) UpdateUser(id string, user *models.User, ctx context.Context) (*dtos.UserResponse, *models.ErrorResponse) {
 	uId, err := uuid.Parse(id)
 	if err != nil {
 		return nil, models.InternalServerError("Invalid UUID format")
 	}
 	var existingUser models.User
 	if err := r.db.WithContext(ctx).First(&existingUser, uId).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, models.NotFound("User not found")
+		}
 		return nil, models.InternalServerError(err.Error())
 	}
 
