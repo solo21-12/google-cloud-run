@@ -9,11 +9,11 @@ import (
 )
 
 type RoleController interface {
-	GetAllRoles(gin.Context)
-	GetRoleById(gin.Context)
-	CreateRole(gin.Context)
-	UpdateRole(gin.Context)
-	DeleteRole(gin.Context)
+	GetAllRoles(c *gin.Context)
+	GetRoleById(c *gin.Context)
+	CreateRole(c *gin.Context)
+	UpdateRole(c *gin.Context)
+	DeleteRole(c *gin.Context)
 }
 
 type RoleUseCase interface {

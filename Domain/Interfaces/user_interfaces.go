@@ -9,13 +9,13 @@ import (
 )
 
 type UserController interface {
-	GetAllUsers(gin.Context)
-	GetUserById(gin.Context)
-	GetUsersGroup(gin.Context)
-	SearchUsers(gin.Context)
-	CreateUser(gin.Context)
-	UpdateUser(gin.Context)
-	DeleteUser(gin.Context)
+	GetAllUsers(c *gin.Context)
+	GetUserById(c *gin.Context)
+	GetUsersGroup(c *gin.Context)
+	SearchUsers(c *gin.Context)
+	CreateUser(c *gin.Context)
+	UpdateUser(c *gin.Context)
+	DeleteUser(c *gin.Context)
 }
 
 type UserUseCase interface {

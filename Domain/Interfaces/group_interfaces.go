@@ -9,12 +9,12 @@ import (
 )
 
 type GroupController interface {
-	GetAllGroups(gin.Context)
-	GetGroupById(gin.Context)
-	GetGroupUsers(gin.Context)
-	CreateGroup(gin.Context)
-	UpdateGroup(gin.Context)
-	DeleteGroup(gin.Context)
+	GetAllGroups(c *gin.Context)
+	GetGroupById(c *gin.Context)
+	GetGroupUsers(c *gin.Context)
+	CreateGroup(c *gin.Context)
+	UpdateGroup(c *gin.Context)
+	DeleteGroup(c *gin.Context)
 }
 
 type GroupUseCase interface {
