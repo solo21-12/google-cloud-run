@@ -18,16 +18,16 @@ type RoleController interface {
 
 type RoleUseCase interface {
 	GetAllRoles(ctx context.Context) ([]*models.Role, *models.ErrorResponse)
-	GetRoleById(id int, ctx context.Context) (*models.Role, *models.ErrorResponse)
+	GetRoleById(id string, ctx context.Context) (*models.Role, *models.ErrorResponse)
 	CreateRole(role dtos.RoleCreateRequest, ctx context.Context) (*dtos.RoleResponse, *models.ErrorResponse)
 	UpdateRole(role dtos.RoleUpdateRequest, ctx context.Context) (*dtos.RoleResponse, *models.ErrorResponse)
-	DeleteRole(id int, ctx context.Context) *models.ErrorResponse
+	DeleteRole(id string, ctx context.Context) *models.ErrorResponse
 }
 
 type RoleRepository interface {
 	GetAllRoles(ctx context.Context) ([]*models.Role, *models.ErrorResponse)
-	GetRoleById(id int, ctx context.Context) (*models.Role, *models.ErrorResponse)
+	GetRoleById(id string, ctx context.Context) (*models.Role, *models.ErrorResponse)
 	CreateRole(role dtos.RoleCreateRequest, ctx context.Context) (*dtos.RoleResponse, *models.ErrorResponse)
-	UpdateRole(role dtos.RoleUpdateRequest, ctx context.Context) (*dtos.RoleResponse, *models.ErrorResponse)
-	DeleteRole(id int, ctx context.Context) *models.ErrorResponse
+	UpdateRole(id string, role dtos.RoleUpdateRequest, ctx context.Context) (*dtos.RoleResponse, *models.ErrorResponse)
+	DeleteRole(id string, ctx context.Context) *models.ErrorResponse
 }

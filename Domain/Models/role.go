@@ -10,7 +10,7 @@ type Rights struct {
 }
 
 type Role struct {
-	UID    uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"uid"`
+	RID    uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"uid"`
 	Name   string    `json:"name"`
 	Rights Rights    `gorm:"type:json" json:"rights"`
 	UserID uuid.UUID `json:"user_id"`

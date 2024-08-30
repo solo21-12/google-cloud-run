@@ -19,18 +19,18 @@ type GroupController interface {
 
 type GroupUseCase interface {
 	GetAllGroups() ([]*models.Group, *models.ErrorResponse)
-	GetGroupById(id int, ctx context.Context) (*models.Group, *models.ErrorResponse)
-	GetGroupUsers(id int, ctx context.Context) ([]*models.User, *models.ErrorResponse)
+	GetGroupById(id string, ctx context.Context) (*models.Group, *models.ErrorResponse)
+	GetGroupUsers(id string, ctx context.Context) ([]*models.User, *models.ErrorResponse)
 	CreateGroup(group dtos.GroupCreateRequest, ctx context.Context) (*dtos.GroupResponse, *models.ErrorResponse)
 	UpdateGroup(group dtos.GroupUpdateRequest, ctx context.Context) (*dtos.GroupResponse, *models.ErrorResponse)
-	DeleteGroup(id int, ctx context.Context) *models.ErrorResponse
+	DeleteGroup(id string, ctx context.Context) *models.ErrorResponse
 }
 
 type GroupRepository interface {
 	GetAllGroups(ctx context.Context) ([]*models.Group, *models.ErrorResponse)
-	GetGroupById(id int, ctx context.Context) (*models.Group, *models.ErrorResponse)
-	GetGroupUsers(id int, ctx context.Context) ([]*models.User, *models.ErrorResponse)
+	GetGroupById(id string, ctx context.Context) (*models.Group, *models.ErrorResponse)
+	GetGroupUsers(id string, ctx context.Context) ([]models.User, *models.ErrorResponse)
 	CreateGroup(group dtos.GroupCreateRequest, ctx context.Context) (*dtos.GroupResponse, *models.ErrorResponse)
-	UpdateGroup(group dtos.GroupUpdateRequest, ctx context.Context) (*dtos.GroupResponse, *models.ErrorResponse)
-	DeleteGroup(id int, ctx context.Context) *models.ErrorResponse
+	UpdateGroup(id string, group dtos.GroupUpdateRequest, ctx context.Context) (*dtos.GroupResponse, *models.ErrorResponse)
+	DeleteGroup(id string, ctx context.Context) *models.ErrorResponse
 }

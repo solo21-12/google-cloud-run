@@ -9,6 +9,6 @@ type GroupUpdateRequest struct {
 }
 
 type GroupResponse struct {
-	ID   uint    `json:"id"`
+	GID   string    `json:"id"`
 	Name string `json:"name"`
 }
