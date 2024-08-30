@@ -36,3 +36,13 @@ type SearchFields struct {
 	Limit   int    `json:"limit"`
 	OrderBy string `json:"orderBy"`
 }
+
+type LoginRequest struct {
+	Email    string `json:"username_or_email" validate:"required"`
+	Password string `json:"password" validate:"required"`
+}
+
+type LoginResponse struct {
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+}

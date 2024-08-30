@@ -10,6 +10,8 @@ import (
 
 type userUseCase struct {
 	userRepo        interfaces.UserRepository
+	roleRepo        interfaces.RoleRepository
+	groupRepo       interfaces.GroupRepository
 	passwordService interfaces.PasswordService
 	emailService    interfaces.EmailService
 }
@@ -18,11 +20,15 @@ func NewUserUseCase(
 	userRepo interfaces.UserRepository,
 	passwordService interfaces.PasswordService,
 	emailService interfaces.EmailService,
+	roleRepo interfaces.RoleRepository,
+	groupRepo interfaces.GroupRepository,
 ) interfaces.UserUseCase {
 	return &userUseCase{
 		userRepo:        userRepo,
 		passwordService: passwordService,
 		emailService:    emailService,
+		roleRepo:        roleRepo,
+		groupRepo:       groupRepo,
 	}
 }
 
@@ -127,4 +133,32 @@ func (uc *userUseCase) DeleteUser(id string, ctx context.Context) *models.ErrorR
 	}
 
 	return uc.userRepo.DeleteUser(id, ctx)
+}
+
+func (uc *userUseCase) AddUserToGroup(req dtos.AddUserToGroupRequest, ctx context.Context) *models.ErrorResponse {
+	_, err := uc.userRepo.GetUserById(req.UserId, ctx)
+	if err != nil {
+		return models.NotFound("User not found")
+	}
+
+	_, err = uc.groupRepo.GetGroupById(req.GroupId, ctx)
+	if err != nil {
+		return models.NotFound("Group not found")
+	}
+
+	return uc.userRepo.AddUserToGroup(req, ctx)
+}
+
+func (uc *userUseCase) AddUserToRole(req dtos.AddUserToRoleRequest, ctx context.Context) *models.ErrorResponse {
+	_, err := uc.userRepo.GetUserById(req.UserId, ctx)
+	if err != nil {
+		return models.NotFound("User not found")
+	}
+
+	_, err = uc.roleRepo.GetRoleById(req.RoleId, ctx)
+	if err != nil {
+		return models.NotFound("Role not found")
+	}
+
+	return uc.userRepo.AddUserToRole(req, ctx)
 }

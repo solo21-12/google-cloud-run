@@ -9,6 +9,7 @@ import (
 
 type Env struct {
 	DATABASE_URL string `mapstructure:"DATABASE_URL"`
+	JWT_SECRET   string `mapstructure:"JWT_SECRET"`
 }
 
 func NewEnv() *Env {
@@ -28,6 +29,7 @@ func NewEnv() *Env {
 
 	env := &Env{}
 	viper.BindEnv("DATABASE_URL")
+	viper.BindEnv("JWT_SECRET")
 
 	if err := viper.Unmarshal(env); err != nil {
 		log.Fatalf("Error unmarshalling config: %v", err)

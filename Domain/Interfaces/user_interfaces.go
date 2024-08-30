@@ -15,6 +15,8 @@ type UserController interface {
 	CreateUser(c *gin.Context)
 	UpdateUser(c *gin.Context)
 	DeleteUser(c *gin.Context)
+	AddUserToGroup(c *gin.Context)
+	AddUserToRole(c *gin.Context)
 }
 
 type UserUseCase interface {
@@ -25,6 +27,8 @@ type UserUseCase interface {
 	CreateUser(user dtos.UserCreateRequest, ctx context.Context) (*dtos.UserResponse, *models.ErrorResponse)
 	UpdateUser(id string, user dtos.UserUpdateRequest, ctx context.Context) (*dtos.UserResponse, *models.ErrorResponse)
 	DeleteUser(id string, ctx context.Context) *models.ErrorResponse
+	AddUserToGroup(req dtos.AddUserToGroupRequest, ctx context.Context) *models.ErrorResponse
+	AddUserToRole(req dtos.AddUserToRoleRequest, ctx context.Context) *models.ErrorResponse
 }
 
 type UserRepository interface {
@@ -36,4 +40,10 @@ type UserRepository interface {
 	CreateUser(user dtos.UserCreateRequest, ctx context.Context) (*dtos.UserResponse, *models.ErrorResponse)
 	UpdateUser(id string, user *models.User, ctx context.Context) (*dtos.UserResponse, *models.ErrorResponse)
 	DeleteUser(id string, ctx context.Context) *models.ErrorResponse
+	AddUserToGroup(req dtos.AddUserToGroupRequest, ctx context.Context) *models.ErrorResponse
+	AddUserToRole(req dtos.AddUserToRoleRequest, ctx context.Context) *models.ErrorResponse
+}
+
+type LoginUsecase interface {
+	LoginUser(ctx context.Context, userReqest dtos.LoginRequest) (*dtos.LoginResponse, *models.ErrorResponse)
 }

@@ -15,6 +15,8 @@ func SetUp() {
 	router := gin.Default()
 
 	NewUserRouter(client, *env, router)
+	NewGroupRouter(client, *env, router)
+	NewRoleRouter(client, *env, router)
 
 	router.Run(":8081")
 }

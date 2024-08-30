@@ -150,3 +150,71 @@ func (r *userRepository) DeleteUser(id string, ctx context.Context) *models.Erro
 	}
 	return nil
 }
+
+func (r *userRepository) AddUserToGroup(req dtos.AddUserToGroupRequest, ctx context.Context) *models.ErrorResponse {
+	uId, err := uuid.Parse(req.UserId)
+	if err != nil {
+		return models.InternalServerError("Invalid UUID format")
+	}
+
+	gId, err := uuid.Parse(req.GroupId)
+	if err != nil {
+		return models.InternalServerError("Invalid UUID format")
+	}
+
+	var user models.User
+	if err := r.db.WithContext(ctx).First(&user, uId).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return models.NotFound("User not found")
+		}
+		return models.InternalServerError(err.Error())
+	}
+
+	var group models.Group
+	if err := r.db.WithContext(ctx).First(&group, gId).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return models.NotFound("Group not found")
+		}
+		return models.InternalServerError(err.Error())
+	}
+
+	if err := r.db.WithContext(ctx).Model(&user).Association("Groups").Append(&group); err != nil {
+		return models.InternalServerError(err.Error())
+	}
+
+	return nil
+}
+
+func (r *userRepository) AddUserToRole(req dtos.AddUserToRoleRequest, ctx context.Context) *models.ErrorResponse {
+	uId, err := uuid.Parse(req.UserId)
+	if err != nil {
+		return models.InternalServerError("Invalid UUID format")
+	}
+
+	rId, err := uuid.Parse(req.RoleId)
+	if err != nil {
+		return models.InternalServerError("Invalid UUID format")
+	}
+
+	var user models.User
+	if err := r.db.WithContext(ctx).First(&user, uId).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return models.NotFound("User not found")
+		}
+		return models.InternalServerError(err.Error())
+	}
+
+	var role models.Role
+	if err := r.db.WithContext(ctx).First(&role, rId).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return models.NotFound("Role not found")
+		}
+		return models.InternalServerError(err.Error())
+	}
+
+	if err := r.db.WithContext(ctx).Model(&user).Association("Roles").Append(&role); err != nil {
+		return models.InternalServerError(err.Error())
+	}
+
+	return nil
+}

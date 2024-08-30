@@ -139,3 +139,42 @@ func (uc *userController) DeleteUser(c *gin.Context) {
 
 	c.IndentedJSON(http.StatusNoContent, nil)
 }
+
+func (uc *userController) AddUserToGroup(c *gin.Context) {
+	var req dtos.AddUserToGroupRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	id := c.Param("id")
+	req.UserId = id
+	err := uc.usecase.AddUserToGroup(req, c)
+
+	if err != nil {
+		c.IndentedJSON(err.Code, gin.H{"error": err.Message})
+		return
+	}
+
+	c.IndentedJSON(http.StatusNoContent, nil)
+}
+
+func (uc *userController) AddUserToRole(c *gin.Context) {
+	var req dtos.AddUserToRoleRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	id := c.Param("id")
+	req.UserId = id
+
+	err := uc.usecase.AddUserToRole(req, c)
+
+	if err != nil {
+		c.IndentedJSON(err.Code, gin.H{"error": err.Message})
+		return
+	}
+
+	c.IndentedJSON(http.StatusNoContent, nil)
+}
