@@ -87,6 +87,24 @@ func (r *GroupRepository) GetGroupUsers(id string, ctx context.Context) ([]dtos.
 	return users, nil
 }
 
+func (r *GroupRepository) GetGroupByName(name string, ctx context.Context) (*dtos.GroupResponse, *models.ErrorResponse) {
+	var group models.Group
+	if err := r.db.WithContext(ctx).Where("name = ?", name).Preload("Users").First(&group).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, models.NotFound("Group not found")
+		}
+		return nil, models.InternalServerError(err.Error())
+	}
+
+	result := dtos.GroupResponse{
+		GID:  group.GID.String(),
+		Name: group.Name,
+	}
+	return &result, nil
+}
+
+
+
 func (r *GroupRepository) CreateGroup(group dtos.GroupCreateRequest, ctx context.Context) (*dtos.GroupResponse, *models.ErrorResponse) {
 	newGroup := models.Group{
 		GID:  uuid.New(),
@@ -127,7 +145,6 @@ func (r *GroupRepository) DeleteGroup(id string, ctx context.Context) *models.Er
 		return models.InternalServerError("Invalid UUID format")
 	}
 
-	// Retrieve the group to ensure it exists before attempting deletion
 	var group models.Group
 	if err := r.db.WithContext(ctx).First(&group, gId).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -136,12 +153,10 @@ func (r *GroupRepository) DeleteGroup(id string, ctx context.Context) *models.Er
 		return models.InternalServerError(err.Error())
 	}
 
-	// Set the association to NULL by removing the group from all users
 	if err := r.db.WithContext(ctx).Model(&group).Association("Users").Clear(); err != nil {
 		return models.InternalServerError("Failed to clear group associations")
 	}
 
-	// Delete the group
 	if err := r.db.WithContext(ctx).Delete(&group).Error; err != nil {
 		return models.InternalServerError("Failed to delete group")
 	}

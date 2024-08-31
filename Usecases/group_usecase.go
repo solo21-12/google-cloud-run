@@ -49,6 +49,9 @@ func (uc *groupUseCase) GetGroupUsers(id string, ctx context.Context) ([]dtos.Us
 }
 
 func (uc *groupUseCase) CreateGroup(group dtos.GroupCreateRequest, ctx context.Context) (*dtos.GroupResponse, *models.ErrorResponse) {
+	if group, err := uc.groupRepo.GetGroupByName(group.Name, ctx); err == nil && group != nil {
+		return nil, models.BadRequest("Group with the given name already exists")
+	}
 	return uc.groupRepo.CreateGroup(group, ctx)
 }
 

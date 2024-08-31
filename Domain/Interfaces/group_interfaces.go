@@ -30,6 +30,7 @@ type GroupRepository interface {
 	GetAllGroups(ctx context.Context) ([]*dtos.GroupResponse, *models.ErrorResponse)
 	GetGroupById(id string, ctx context.Context) (*dtos.GroupResponse, *models.ErrorResponse)
 	GetGroupUsers(id string, ctx context.Context) ([]dtos.UserResponse, *models.ErrorResponse)
+	GetGroupByName(name string, ctx context.Context) (*dtos.GroupResponse, *models.ErrorResponse)
 	CreateGroup(group dtos.GroupCreateRequest, ctx context.Context) (*dtos.GroupResponse, *models.ErrorResponse)
 	UpdateGroup(id string, group dtos.GroupUpdateRequest, ctx context.Context) (*dtos.GroupResponse, *models.ErrorResponse)
 	DeleteGroup(id string, ctx context.Context) *models.ErrorResponse
