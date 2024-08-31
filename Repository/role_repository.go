@@ -21,7 +21,6 @@ func NewRoleRepository(db *gorm.DB) interfaces.RoleRepository {
 }
 func (r *roleRepository) GetAllRoles(ctx context.Context) ([]*dtos.RoleResponse, *models.ErrorResponse) {
 	var roles []*models.Role
-	// Preload the correct association name, which is "Users"
 	if err := r.db.WithContext(ctx).Preload("Users").Find(&roles).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return []*dtos.RoleResponse{}, nil
@@ -47,7 +46,6 @@ func (r *roleRepository) GetRoleById(id string, ctx context.Context) (*dtos.Role
 		return nil, models.InternalServerError("Invalid UUID format")
 	}
 	var role models.Role
-	// Preload the correct association name, which is "Users"
 	if err := r.db.WithContext(ctx).Preload("Users").First(&role, roleId).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, models.NotFound("Role not found")
@@ -112,12 +110,10 @@ func (r *roleRepository) DeleteRole(id string, ctx context.Context) *models.Erro
         return models.InternalServerError("Invalid UUID format")
     }
 
-    // Explicitly set RoleID to NULL for all users associated with this role
     if err := r.db.WithContext(ctx).Model(&models.User{}).Where("role_id = ?", roleId).Update("role_id", gorm.Expr("NULL")).Error; err != nil {
         return models.InternalServerError("Failed to dissociate users from role: " + err.Error())
     }
 
-    // Now, safely delete the role
     if err := r.db.WithContext(ctx).Delete(&models.Role{}, roleId).Error; err != nil {
         return models.InternalServerError("Failed to delete role: " + err.Error())
     }
