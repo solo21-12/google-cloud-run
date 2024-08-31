@@ -20,6 +20,10 @@ func NewUserController(usecase interfaces.UserUseCase) interfaces.UserController
 	}
 }
 
+func (uc *userController) isSearch(srarchField dtos.SearchFields) bool {
+	return srarchField.Search != "" || srarchField.OrderBy != "" || srarchField.Limit != 10
+}
+
 func (uc *userController) GetUsers(c *gin.Context) {
 	searchFields := dtos.SearchFields{
 		Search:  c.Query("search"),
@@ -41,10 +45,10 @@ func (uc *userController) GetUsers(c *gin.Context) {
 		}
 	}
 
-	var users []*models.User
+	var users []*dtos.UserResponse
 	var errResp *models.ErrorResponse
 
-	if searchFields.Search == "" && searchFields.OrderBy == "" {
+	if !uc.isSearch(searchFields) {
 		users, errResp = uc.usecase.GetAllUsers(c.Request.Context())
 	} else {
 		users, errResp = uc.usecase.SearchUsers(searchFields, c.Request.Context())
@@ -156,7 +160,7 @@ func (uc *userController) AddUserToGroup(c *gin.Context) {
 		return
 	}
 
-	c.IndentedJSON(http.StatusNoContent, nil)
+	c.IndentedJSON(http.StatusOK, gin.H{"message": "User added to group"})
 }
 
 func (uc *userController) AddUserToRole(c *gin.Context) {
@@ -176,5 +180,5 @@ func (uc *userController) AddUserToRole(c *gin.Context) {
 		return
 	}
 
-	c.IndentedJSON(http.StatusNoContent, nil)
+	c.IndentedJSON(http.StatusOK, gin.H{"message": "User added to role"})
 }

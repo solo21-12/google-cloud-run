@@ -13,7 +13,7 @@ type RoleUpdateRequest struct {
 }
 
 type RoleResponse struct {
-	RID     string          `json:"id"`
+	RID     string          `json:"rid"`
 	Name   string        `json:"name"`
 	Rights models.Rights `json:"rights"`
 }

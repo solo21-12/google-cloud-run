@@ -1,17 +1,15 @@
 package dtos
 
 type UserCreateRequest struct {
-	Name     string `json:"name"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
-	Status   int    `json:"status"`
+	Name   string `json:"name"`
+	Email  string `json:"email"`
+	Status int    `json:"status"`
 }
 
 type UserUpdateRequest struct {
-	Name     string `json:"name"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
-	Status   int    `json:"status"`
+	Name   string `json:"name"`
+	Email  string `json:"email"`
+	Status int    `json:"status"`
 }
 
 type AddUserToGroupRequest struct {
@@ -29,6 +27,15 @@ type UserResponse struct {
 	Name   string `json:"name"`
 	Email  string `json:"email"`
 	Status int    `json:"status"`
+}
+
+type UserResponseSingle struct {
+	UID    string          `json:"uid"`
+	Name   string          `json:"name"`
+	Email  string          `json:"email"`
+	Status int             `json:"status"`
+	Groups []GroupResponse `json:"groups"`
+	Roles  []RoleResponse  `json:"roles"`
 }
 
 type SearchFields struct {

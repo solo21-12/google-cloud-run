@@ -40,19 +40,6 @@ func (uc *userUseCase) checkEmailExists(email string, ctx context.Context) (*mod
 	return nil, nil
 }
 
-func (uc *userUseCase) processPassword(password string) (string, *models.ErrorResponse) {
-	if err := uc.passwordService.ValidatePasswordStrength(password); err != nil {
-		return "", err
-	}
-
-	hashedPassword, err := uc.passwordService.EncryptPassword(password)
-	if err != nil {
-		return "", models.InternalServerError(err.Error())
-	}
-
-	return hashedPassword, nil
-}
-
 func (uc *userUseCase) validateEmail(email string) *models.ErrorResponse {
 	if valid := uc.emailService.IsValidEmail(email); !valid {
 		return models.BadRequest("Invalid email")
@@ -60,19 +47,19 @@ func (uc *userUseCase) validateEmail(email string) *models.ErrorResponse {
 	return nil
 }
 
-func (uc *userUseCase) GetAllUsers(ctx context.Context) ([]*models.User, *models.ErrorResponse) {
+func (uc *userUseCase) GetAllUsers(ctx context.Context) ([]*dtos.UserResponse, *models.ErrorResponse) {
 	return uc.userRepo.GetAllUsers(ctx)
 }
 
-func (uc *userUseCase) GetUserById(id string, ctx context.Context) (*models.User, *models.ErrorResponse) {
+func (uc *userUseCase) GetUserById(id string, ctx context.Context) (*dtos.UserResponseSingle, *models.ErrorResponse) {
 	return uc.userRepo.GetUserById(id, ctx)
 }
 
-func (uc *userUseCase) GetUsersGroup(id string, ctx context.Context) ([]*models.Group, *models.ErrorResponse) {
+func (uc *userUseCase) GetUsersGroup(id string, ctx context.Context) ([]*dtos.GroupResponse, *models.ErrorResponse) {
 	return uc.userRepo.GetUsersGroups(id, ctx)
 }
 
-func (uc *userUseCase) SearchUsers(searchFields dtos.SearchFields, ctx context.Context) ([]*models.User, *models.ErrorResponse) {
+func (uc *userUseCase) SearchUsers(searchFields dtos.SearchFields, ctx context.Context) ([]*dtos.UserResponse, *models.ErrorResponse) {
 	return uc.userRepo.SearchUsers(searchFields, ctx)
 }
 
@@ -85,12 +72,6 @@ func (uc *userUseCase) CreateUser(user dtos.UserCreateRequest, ctx context.Conte
 		return nil, err
 	}
 
-	hashedPassword, err := uc.processPassword(user.Password)
-	if err != nil {
-		return nil, err
-	}
-
-	user.Password = hashedPassword
 	return uc.userRepo.CreateUser(user, ctx)
 }
 
@@ -111,19 +92,16 @@ func (uc *userUseCase) UpdateUser(id string, user dtos.UserUpdateRequest, ctx co
 		userToUpdate.Email = user.Email
 	}
 
-	if user.Password != "" {
-		hashedPassword, err := uc.processPassword(user.Password)
-		if err != nil {
-			return nil, err
-		}
-		userToUpdate.Password = hashedPassword
-	}
-
 	if user.Status != 0 {
 		userToUpdate.Status = user.Status
 	}
 
-	return uc.userRepo.UpdateUser(id, userToUpdate, ctx)
+	updateUs := &dtos.UserUpdateRequest{
+		Name:   userToUpdate.Name,
+		Email:  userToUpdate.Email,
+		Status: userToUpdate.Status,
+	}
+	return uc.userRepo.UpdateUser(id, updateUs, ctx)
 }
 
 func (uc *userUseCase) DeleteUser(id string, ctx context.Context) *models.ErrorResponse {

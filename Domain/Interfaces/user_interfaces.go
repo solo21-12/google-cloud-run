@@ -20,10 +20,10 @@ type UserController interface {
 }
 
 type UserUseCase interface {
-	GetAllUsers(ctx context.Context) ([]*models.User, *models.ErrorResponse)
-	GetUserById(id string, ctx context.Context) (*models.User, *models.ErrorResponse)
-	GetUsersGroup(id string, ctx context.Context) ([]*models.Group, *models.ErrorResponse)
-	SearchUsers(searchFields dtos.SearchFields, ctx context.Context) ([]*models.User, *models.ErrorResponse)
+	GetAllUsers(ctx context.Context) ([]*dtos.UserResponse, *models.ErrorResponse)
+	GetUserById(id string, ctx context.Context) (*dtos.UserResponseSingle, *models.ErrorResponse)
+	GetUsersGroup(id string, ctx context.Context) ([]*dtos.GroupResponse, *models.ErrorResponse)
+	SearchUsers(searchFields dtos.SearchFields, ctx context.Context) ([]*dtos.UserResponse, *models.ErrorResponse)
 	CreateUser(user dtos.UserCreateRequest, ctx context.Context) (*dtos.UserResponse, *models.ErrorResponse)
 	UpdateUser(id string, user dtos.UserUpdateRequest, ctx context.Context) (*dtos.UserResponse, *models.ErrorResponse)
 	DeleteUser(id string, ctx context.Context) *models.ErrorResponse
@@ -32,13 +32,13 @@ type UserUseCase interface {
 }
 
 type UserRepository interface {
-	GetAllUsers(ctx context.Context) ([]*models.User, *models.ErrorResponse)
-	GetUserById(id string, ctx context.Context) (*models.User, *models.ErrorResponse)
+	GetAllUsers(ctx context.Context) ([]*dtos.UserResponse, *models.ErrorResponse)
+	GetUserById(id string, ctx context.Context) (*dtos.UserResponseSingle, *models.ErrorResponse)
 	GetUserByEmail(email string, ctx context.Context) (*models.User, *models.ErrorResponse)
-	GetUsersGroups(uid string, ctx context.Context) ([]*models.Group, *models.ErrorResponse)
-	SearchUsers(searchFields dtos.SearchFields, ctx context.Context) ([]*models.User, *models.ErrorResponse)
+	GetUsersGroups(uid string, ctx context.Context) ([]*dtos.GroupResponse, *models.ErrorResponse)
+	SearchUsers(searchFields dtos.SearchFields, ctx context.Context) ([]*dtos.UserResponse, *models.ErrorResponse)
 	CreateUser(user dtos.UserCreateRequest, ctx context.Context) (*dtos.UserResponse, *models.ErrorResponse)
-	UpdateUser(id string, user *models.User, ctx context.Context) (*dtos.UserResponse, *models.ErrorResponse)
+	UpdateUser(id string, user *dtos.UserUpdateRequest, ctx context.Context) (*dtos.UserResponse, *models.ErrorResponse)
 	DeleteUser(id string, ctx context.Context) *models.ErrorResponse
 	AddUserToGroup(req dtos.AddUserToGroupRequest, ctx context.Context) *models.ErrorResponse
 	AddUserToRole(req dtos.AddUserToRoleRequest, ctx context.Context) *models.ErrorResponse

@@ -13,7 +13,9 @@ type groupController struct {
 }
 
 func NewGroupController(usecase interfaces.GroupUseCase) interfaces.GroupController {
-	return &groupController{}
+	return &groupController{
+		usecase: usecase,
+	}
 }
 
 func (gc *groupController) GetAllGroups(c *gin.Context) {
