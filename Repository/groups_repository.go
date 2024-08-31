@@ -39,13 +39,11 @@ func (r *GroupRepository) GetAllGroups(ctx context.Context) ([]*dtos.GroupRespon
 	return result, nil
 }
 
-func (r *GroupRepository) GetGroupById(id string, ctx context.Context) (*dtos.GroupResponse, *models.ErrorResponse) {
-	gId, err := uuid.Parse(id)
-	if err != nil {
-		return nil, models.InternalServerError("Invalid UUID format")
-	}
+func (r *GroupRepository) GetGroupById(gId string, ctx context.Context) (*dtos.GroupResponse, *models.ErrorResponse) {
 	var group models.Group
-	if err := r.db.WithContext(ctx).Preload("Users").First(&group, gId).Error; err != nil {
+	if err := r.db.WithContext(ctx).Preload("Users").
+		Where("g_id = ?", gId).
+		First(&group).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, models.NotFound("Group not found")
 		}
@@ -59,14 +57,13 @@ func (r *GroupRepository) GetGroupById(id string, ctx context.Context) (*dtos.Gr
 	return &result, nil
 }
 
-func (r *GroupRepository) GetGroupUsers(id string, ctx context.Context) ([]dtos.UserResponse, *models.ErrorResponse) {
+func (r *GroupRepository) GetGroupUsers(gId string, ctx context.Context) ([]dtos.UserResponse, *models.ErrorResponse) {
 	var group models.Group
-	gId, err := uuid.Parse(id)
-	if err != nil {
-		return nil, models.InternalServerError("Invalid UUID format")
-	}
 
-	if err := r.db.WithContext(ctx).Preload("Users").First(&group, gId).Error; err != nil {
+	if err := r.db.WithContext(ctx).
+		Preload("Users").
+		Where("g_id = ?", gId).
+		First(&group).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, models.NotFound("Group not found")
 		}
@@ -103,8 +100,6 @@ func (r *GroupRepository) GetGroupByName(name string, ctx context.Context) (*dto
 	return &result, nil
 }
 
-
-
 func (r *GroupRepository) CreateGroup(group dtos.GroupCreateRequest, ctx context.Context) (*dtos.GroupResponse, *models.ErrorResponse) {
 	newGroup := models.Group{
 		GID:  uuid.New(),
@@ -119,13 +114,11 @@ func (r *GroupRepository) CreateGroup(group dtos.GroupCreateRequest, ctx context
 	}, nil
 }
 
-func (r *GroupRepository) UpdateGroup(id string, group dtos.GroupUpdateRequest, ctx context.Context) (*dtos.GroupResponse, *models.ErrorResponse) {
-	gId, err := uuid.Parse(id)
-	if err != nil {
-		return nil, models.InternalServerError("Invalid UUID format")
-	}
+func (r *GroupRepository) UpdateGroup(gId string, group dtos.GroupUpdateRequest, ctx context.Context) (*dtos.GroupResponse, *models.ErrorResponse) {
 	var existingGroup models.Group
-	if err := r.db.WithContext(ctx).First(&existingGroup, gId).Error; err != nil {
+	if err := r.db.WithContext(ctx).
+		Where("g_id = ?", gId).
+		First(&existingGroup).Error; err != nil {
 
 		return nil, models.InternalServerError(err.Error())
 	}
@@ -138,27 +131,34 @@ func (r *GroupRepository) UpdateGroup(id string, group dtos.GroupUpdateRequest, 
 
 	return &dtos.GroupResponse{GID: existingGroup.GID.String(), Name: existingGroup.Name}, nil
 }
-
 func (r *GroupRepository) DeleteGroup(id string, ctx context.Context) *models.ErrorResponse {
+	// Parse the UUID from the string
 	gId, err := uuid.Parse(id)
 	if err != nil {
 		return models.InternalServerError("Invalid UUID format")
 	}
 
+	// Fetch the group using g_id
 	var group models.Group
-	if err := r.db.WithContext(ctx).First(&group, gId).Error; err != nil {
+	if err := r.db.WithContext(ctx).
+		Where("g_id = ?", gId). // Use g_id to fetch the group
+		First(&group).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return models.NotFound("Group not found")
 		}
-		return models.InternalServerError(err.Error())
+		return models.InternalServerError("Failed to fetch group: " + err.Error())
 	}
 
+	// Dissociate users from the group
 	if err := r.db.WithContext(ctx).Model(&group).Association("Users").Clear(); err != nil {
-		return models.InternalServerError("Failed to clear group associations")
+		return models.InternalServerError("Failed to clear group associations: " + err.Error())
 	}
 
-	if err := r.db.WithContext(ctx).Delete(&group).Error; err != nil {
-		return models.InternalServerError("Failed to delete group")
+	// Delete the group
+	if err := r.db.WithContext(ctx).
+		Where("g_id = ?", gId). // Use g_id for deletion
+		Delete(&group).Error; err != nil {
+		return models.InternalServerError("Failed to delete group: " + err.Error())
 	}
 
 	return nil

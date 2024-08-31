@@ -39,17 +39,14 @@ func (r *userRepository) GetAllUsers(ctx context.Context) ([]*dtos.UserResponse,
 	return result, nil
 }
 
-func (r *userRepository) GetUserById(id string, ctx context.Context) (*dtos.UserResponseSingle, *models.ErrorResponse) {
-	uId, err := uuid.Parse(id)
-	if err != nil {
-		return nil, models.InternalServerError("Invalid UUID format")
-	}
+func (r *userRepository) GetUserById(uid string, ctx context.Context) (*dtos.UserResponseSingle, *models.ErrorResponse) {
 
 	var user models.User
 	if err := r.db.WithContext(ctx).
 		Preload("Groups").
 		Preload("Role").
-		First(&user, uId).Error; err != nil {
+		Where("uid = ?", uid).
+		First(&user).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, models.NotFound("User not found")
 		}
@@ -70,7 +67,7 @@ func (r *userRepository) GetUserById(id string, ctx context.Context) (*dtos.User
 	result.Name = user.Name
 	result.Email = user.Email
 	result.Status = user.Status
-	result.Roles = roleRes
+	result.Role = roleRes
 
 	for _, group := range user.Groups {
 		result.Groups = append(result.Groups, dtos.GroupResponse{
@@ -94,16 +91,13 @@ func (r *userRepository) GetUserByEmail(email string, ctx context.Context) (*mod
 	return &user, nil
 }
 
-func (r *userRepository) GetUsersGroups(id string, ctx context.Context) ([]*dtos.GroupResponse, *models.ErrorResponse) {
+func (r *userRepository) GetUsersGroups(uid string, ctx context.Context) ([]*dtos.GroupResponse, *models.ErrorResponse) {
 	var user models.User
-	uId, err := uuid.Parse(id)
-	if err != nil {
-		return nil, models.InternalServerError("Invalid UUID format")
-	}
 
 	if err := r.db.WithContext(ctx).
 		Preload("Groups").
-		First(&user, uId).Error; err != nil {
+		Where("uid = ?", uid).
+		First(&user).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, models.NotFound("User not found")
 		}
@@ -171,13 +165,17 @@ func (r *userRepository) CreateUser(user dtos.UserCreateRequest, ctx context.Con
 	}, nil
 }
 
-func (r *userRepository) UpdateUser(id string, user *dtos.UserUpdateRequest, ctx context.Context) (*dtos.UserResponse, *models.ErrorResponse) {
-	uId, err := uuid.Parse(id)
-	if err != nil {
-		return nil, models.InternalServerError("Invalid UUID format")
-	}
+func (r *userRepository) UpdateUser(uid string, user *dtos.UserUpdateRequest, ctx context.Context) (*dtos.UserResponse, *models.ErrorResponse) {
 	var existingUser models.User
-	if err := r.db.WithContext(ctx).First(&existingUser, uId).Error; err != nil {
+
+	uId, err := uuid.Parse(uid)
+	if err != nil {
+		return nil, models.InternalServerError("Invalid UUID format for UID")
+	}
+
+	if err := r.db.WithContext(ctx).
+		Where("uid = ?", uId).
+		First(&existingUser).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, models.NotFound("User not found")
 		}
@@ -189,37 +187,50 @@ func (r *userRepository) UpdateUser(id string, user *dtos.UserUpdateRequest, ctx
 	existingUser.Status = user.Status
 
 	if err := r.db.WithContext(ctx).Save(&existingUser).Error; err != nil {
-		return nil, models.InternalServerError(err.Error())
+		return nil, models.InternalServerError("Failed to update user: " + err.Error())
 	}
 
-	return &dtos.UserResponse{UID: existingUser.UID.String(), Name: existingUser.Name, Email: existingUser.Email, Status: existingUser.Status}, nil
+	return &dtos.UserResponse{
+		UID:    existingUser.UID.String(),
+		Name:   existingUser.Name,
+		Email:  existingUser.Email,
+		Status: existingUser.Status,
+	}, nil
 }
 
-func (r *userRepository) DeleteUser(id string, ctx context.Context) *models.ErrorResponse {
-	uId, err := uuid.Parse(id)
-	if err != nil {
-		return models.InternalServerError("Invalid UUID format")
-	}
+func (r *userRepository) DeleteUser(uid string, ctx context.Context) *models.ErrorResponse {
+	var existingUser models.User
 
-	if err := r.db.WithContext(ctx).Delete(&models.User{}, uId).Error; err != nil {
+	if err := r.db.WithContext(ctx).
+		Where("uid = ?", uid).
+		First(&existingUser).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return models.NotFound("User not found")
+		}
 		return models.InternalServerError(err.Error())
 	}
+
+	if err := r.db.WithContext(ctx).
+		Model(&existingUser).
+		Association("Groups").Clear(); err != nil {
+		return models.InternalServerError("Failed to dissociate user from groups: " + err.Error())
+	}
+
+	// Delete the user
+	if err := r.db.WithContext(ctx).
+		Delete(&models.User{}, existingUser.ID).Error; err != nil {
+		return models.InternalServerError("Failed to delete user: " + err.Error())
+	}
+
 	return nil
 }
 
 func (r *userRepository) AddUserToGroup(req dtos.AddUserToGroupRequest, ctx context.Context) *models.ErrorResponse {
-	uId, err := uuid.Parse(req.UserId)
-	if err != nil {
-		return models.InternalServerError("Invalid UUID format")
-	}
-
-	gId, err := uuid.Parse(req.GroupId)
-	if err != nil {
-		return models.InternalServerError("Invalid UUID format")
-	}
 
 	var user models.User
-	if err := r.db.WithContext(ctx).First(&user, uId).Error; err != nil {
+	if err := r.db.WithContext(ctx).
+		Where("uid = ?", req.UserId).
+		First(&user).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return models.NotFound("User not found")
 		}
@@ -227,7 +238,9 @@ func (r *userRepository) AddUserToGroup(req dtos.AddUserToGroupRequest, ctx cont
 	}
 
 	var group models.Group
-	if err := r.db.WithContext(ctx).First(&group, gId).Error; err != nil {
+	if err := r.db.WithContext(ctx).
+		Where("g_id = ?", req.GroupId).
+		First(&group).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return models.NotFound("Group not found")
 		}
@@ -243,32 +256,32 @@ func (r *userRepository) AddUserToGroup(req dtos.AddUserToGroupRequest, ctx cont
 
 func (repo *userRepository) AddUserToRole(req dtos.AddUserToRoleRequest, ctx context.Context) *models.ErrorResponse {
 	var user models.User
+	var role models.Role
 
-	// Parse UUIDs
-	rid, err := uuid.Parse(req.RoleId)
-	if err != nil {
-		return &models.ErrorResponse{Message: "Invalid UUID format for RoleId", Code: 500}
+	if err := repo.db.WithContext(ctx).
+		Where("r_id = ?", req.RoleId).
+		First(&role).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return &models.ErrorResponse{Message: "Role not found", Code: 404}
+		}
+		return &models.ErrorResponse{Message: "Failed to fetch role: " + err.Error(), Code: 500}
 	}
 
-	uId, err := uuid.Parse(req.UserId)
-	if err != nil {
-		return &models.ErrorResponse{Message: "Invalid UUID format for UserId", Code: 500}
-	}
-
-	// Find the user by UserId
-	if err := repo.db.WithContext(ctx).First(&user, "uid = ?", uId).Error; err != nil {
+	if err := repo.db.WithContext(ctx).
+		Where("uid = ?", req.UserId). // Use uid to fetch the user
+		First(&user).Error; err != nil {
 		return &models.ErrorResponse{Message: "User not found", Code: 404}
 	}
 
 	// Check if the user already has the specified role
-	if user.RoleID != nil && *user.RoleID == rid {
+	if user.RoleID != nil && *user.RoleID == role.ID {
 		return &models.ErrorResponse{Message: "User already has the specified role", Code: 400}
 	}
 
 	// Update the user's RoleID
-	user.RoleID = &rid
+	user.RoleID = &role.ID
 	if err := repo.db.WithContext(ctx).Save(&user).Error; err != nil {
-		return &models.ErrorResponse{Message: "Failed to update user role", Code: 500}
+		return &models.ErrorResponse{Message: "Failed to update user role: " + err.Error(), Code: 500}
 	}
 
 	return nil

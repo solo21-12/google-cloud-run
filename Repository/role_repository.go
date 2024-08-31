@@ -40,13 +40,13 @@ func (r *roleRepository) GetAllRoles(ctx context.Context) ([]*dtos.RoleResponse,
 	return result, nil
 }
 
-func (r *roleRepository) GetRoleById(id string, ctx context.Context) (*dtos.RoleResponse, *models.ErrorResponse) {
-	roleId, err := uuid.Parse(id)
-	if err != nil {
-		return nil, models.InternalServerError("Invalid UUID format")
-	}
+func (r *roleRepository) GetRoleById(uid string, ctx context.Context) (*dtos.RoleResponse, *models.ErrorResponse) {
+
 	var role models.Role
-	if err := r.db.WithContext(ctx).Preload("Users").First(&role, roleId).Error; err != nil {
+	if err := r.db.WithContext(ctx).
+		Preload("Users").
+		Where("r_id = ?", uid).
+		First(&role).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, models.NotFound("Role not found")
 		}
@@ -59,7 +59,6 @@ func (r *roleRepository) GetRoleById(id string, ctx context.Context) (*dtos.Role
 		Rights: role.Rights,
 	}, nil
 }
-
 
 func (r *roleRepository) CreateRole(role dtos.RoleCreateRequest, ctx context.Context) (*dtos.RoleResponse, *models.ErrorResponse) {
 
@@ -80,13 +79,15 @@ func (r *roleRepository) CreateRole(role dtos.RoleCreateRequest, ctx context.Con
 	}, nil
 }
 
-func (r *roleRepository) UpdateRole(id string, role dtos.RoleUpdateRequest, ctx context.Context) (*dtos.RoleResponse, *models.ErrorResponse) {
-	roleId, err := uuid.Parse(id)
-	if err != nil {
-		return nil, models.InternalServerError("Invalid UUID format")
-	}
+func (r *roleRepository) UpdateRole(uid string, role dtos.RoleUpdateRequest, ctx context.Context) (*dtos.RoleResponse, *models.ErrorResponse) {
+
 	var existingRole models.Role
-	if err := r.db.WithContext(ctx).First(&existingRole, roleId).Error; err != nil {
+	if err := r.db.WithContext(ctx).
+		Where("r_id = ?", uid).
+		First(&existingRole).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, models.NotFound("Role not found")
+		}
 		return nil, models.InternalServerError(err.Error())
 	}
 
@@ -104,24 +105,36 @@ func (r *roleRepository) UpdateRole(id string, role dtos.RoleUpdateRequest, ctx 
 	}, nil
 }
 
-func (r *roleRepository) DeleteRole(id string, ctx context.Context) *models.ErrorResponse {
-    roleId, err := uuid.Parse(id)
-    if err != nil {
-        return models.InternalServerError("Invalid UUID format")
-    }
+func (r *roleRepository) DeleteRole(rid string, ctx context.Context) *models.ErrorResponse {
+	roleRID, err := uuid.Parse(rid)
+	if err != nil {
+		return models.InternalServerError("Invalid UUID format")
+	}
 
-    if err := r.db.WithContext(ctx).Model(&models.User{}).Where("role_id = ?", roleId).Update("role_id", gorm.Expr("NULL")).Error; err != nil {
-        return models.InternalServerError("Failed to dissociate users from role: " + err.Error())
-    }
+	var role models.Role
+	if err := r.db.WithContext(ctx).
+		Where("r_id = ?", roleRID).
+		First(&role).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return models.NotFound("Role not found")
+		}
+		return models.InternalServerError("Failed to fetch role: " + err.Error())
+	}
 
-    if err := r.db.WithContext(ctx).Delete(&models.Role{}, roleId).Error; err != nil {
-        return models.InternalServerError("Failed to delete role: " + err.Error())
-    }
+	if err := r.db.WithContext(ctx).Model(&models.User{}).
+		Where("role_id = ?", role.ID).
+		Update("role_id", gorm.Expr("NULL")).Error; err != nil {
+		return models.InternalServerError("Failed to dissociate users from role: " + err.Error())
+	}
 
-    return nil
+	if err := r.db.WithContext(ctx).
+		Where("r_id = ?", roleRID).
+		Delete(&models.Role{}).Error; err != nil {
+		return models.InternalServerError("Failed to delete role: " + err.Error())
+	}
+
+	return nil
 }
-
-
 
 func (r *roleRepository) GetRoleUsers(role *dtos.RoleResponse, ctx context.Context) ([]*dtos.UserResponse, *models.ErrorResponse) {
 	var roleModel models.Role

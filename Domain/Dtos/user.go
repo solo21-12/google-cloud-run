@@ -35,7 +35,7 @@ type UserResponseSingle struct {
 	Email  string          `json:"email"`
 	Status int             `json:"status"`
 	Groups []GroupResponse `json:"groups"`
-	Roles  *RoleResponse  `json:"roles"`
+	Role  *RoleResponse  `json:"roles"`
 }
 
 type SearchFields struct {
