@@ -127,8 +127,24 @@ func (r *GroupRepository) DeleteGroup(id string, ctx context.Context) *models.Er
 		return models.InternalServerError("Invalid UUID format")
 	}
 
-	if err := r.db.WithContext(ctx).Delete(&models.Group{}, gId).Error; err != nil {
+	// Retrieve the group to ensure it exists before attempting deletion
+	var group models.Group
+	if err := r.db.WithContext(ctx).First(&group, gId).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return models.NotFound("Group not found")
+		}
 		return models.InternalServerError(err.Error())
 	}
+
+	// Set the association to NULL by removing the group from all users
+	if err := r.db.WithContext(ctx).Model(&group).Association("Users").Clear(); err != nil {
+		return models.InternalServerError("Failed to clear group associations")
+	}
+
+	// Delete the group
+	if err := r.db.WithContext(ctx).Delete(&group).Error; err != nil {
+		return models.InternalServerError("Failed to delete group")
+	}
+
 	return nil
 }
