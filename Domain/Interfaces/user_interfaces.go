@@ -43,7 +43,3 @@ type UserRepository interface {
 	AddUserToGroup(req dtos.AddUserToGroupRequest, ctx context.Context) *models.ErrorResponse
 	AddUserToRole(req dtos.AddUserToRoleRequest, ctx context.Context) *models.ErrorResponse
 }
-
-type LoginUsecase interface {
-	LoginUser(ctx context.Context, userReqest dtos.LoginRequest) (*dtos.LoginResponse, *models.ErrorResponse)
-}

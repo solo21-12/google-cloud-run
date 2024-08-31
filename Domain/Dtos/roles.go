@@ -1,19 +1,19 @@
 package dtos
 
-import models "github.com/google-run-code/Domain/Models"
+import "encoding/json"
 
 type RoleCreateRequest struct {
-	Name   string        `json:"name"`
-	Rights models.Rights `json:"rights"`
+	Name   string          `json:"name" binding:"required"`
+	Rights json.RawMessage `json:"rights" binding:"required"`
 }
 
 type RoleUpdateRequest struct {
-	Name   string        `json:"name"`
-	Rights models.Rights `json:"rights"`
+	Name   string          `json:"name"`
+	Rights json.RawMessage `json:"rights"`
 }
 
 type RoleResponse struct {
-	RID     string          `json:"rid"`
-	Name   string        `json:"name"`
-	Rights models.Rights `json:"rights"`
+	RID    string          `json:"rid"`
+	Name   string          `json:"name"`
+	Rights json.RawMessage `json:"rights"`
 }

@@ -18,7 +18,7 @@ func NewGroupUseCase(groupRepo interfaces.GroupRepository) interfaces.GroupUseCa
 	}
 }
 
-func (uc *groupUseCase) checkGroupExists(id string, ctx context.Context) (*models.Group, *models.ErrorResponse) {
+func (uc *groupUseCase) checkGroupExists(id string, ctx context.Context) (*dtos.GroupResponse, *models.ErrorResponse) {
 	group, err := uc.groupRepo.GetGroupById(id, ctx)
 	if err != nil {
 		return nil, err
@@ -26,15 +26,15 @@ func (uc *groupUseCase) checkGroupExists(id string, ctx context.Context) (*model
 	return group, nil
 }
 
-func (uc *groupUseCase) GetAllGroups(ctx context.Context) ([]*models.Group, *models.ErrorResponse) {
+func (uc *groupUseCase) GetAllGroups(ctx context.Context) ([]*dtos.GroupResponse, *models.ErrorResponse) {
 	return uc.groupRepo.GetAllGroups(ctx)
 }
 
-func (uc *groupUseCase) GetGroupById(id string, ctx context.Context) (*models.Group, *models.ErrorResponse) {
+func (uc *groupUseCase) GetGroupById(id string, ctx context.Context) (*dtos.GroupResponse, *models.ErrorResponse) {
 	return uc.checkGroupExists(id, ctx)
 }
 
-func (uc *groupUseCase) GetGroupUsers(id string, ctx context.Context) ([]models.User, *models.ErrorResponse) {
+func (uc *groupUseCase) GetGroupUsers(id string, ctx context.Context) ([]dtos.UserResponse, *models.ErrorResponse) {
 	_, err := uc.checkGroupExists(id, ctx)
 	if err != nil {
 		return nil, err

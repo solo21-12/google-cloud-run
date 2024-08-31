@@ -12,23 +12,20 @@ type userUseCase struct {
 	userRepo        interfaces.UserRepository
 	roleRepo        interfaces.RoleRepository
 	groupRepo       interfaces.GroupRepository
-	passwordService interfaces.PasswordService
 	emailService    interfaces.EmailService
 }
 
 func NewUserUseCase(
 	userRepo interfaces.UserRepository,
-	passwordService interfaces.PasswordService,
 	emailService interfaces.EmailService,
 	roleRepo interfaces.RoleRepository,
 	groupRepo interfaces.GroupRepository,
 ) interfaces.UserUseCase {
 	return &userUseCase{
-		userRepo:        userRepo,
-		passwordService: passwordService,
-		emailService:    emailService,
-		roleRepo:        roleRepo,
-		groupRepo:       groupRepo,
+		userRepo:     userRepo,
+		emailService: emailService,
+		roleRepo:     roleRepo,
+		groupRepo:    groupRepo,
 	}
 }
 
@@ -114,16 +111,32 @@ func (uc *userUseCase) DeleteUser(id string, ctx context.Context) *models.ErrorR
 }
 
 func (uc *userUseCase) AddUserToGroup(req dtos.AddUserToGroupRequest, ctx context.Context) *models.ErrorResponse {
+	// Check if the user exists
 	_, err := uc.userRepo.GetUserById(req.UserId, ctx)
 	if err != nil {
 		return models.NotFound("User not found")
 	}
 
+	// Check if the group exists
 	_, err = uc.groupRepo.GetGroupById(req.GroupId, ctx)
 	if err != nil {
 		return models.NotFound("Group not found")
 	}
 
+	// Get the user's current groups
+	groups, tErr := uc.userRepo.GetUsersGroups(req.UserId, ctx)
+	if tErr != nil {
+		return tErr
+	}
+
+	// Check if the user is already a member of the group
+	for _, group := range groups {
+		if group.GID == req.GroupId {
+			return models.BadRequest("User is already a member of the group")
+		}
+	}
+
+	// Add the user to the group
 	return uc.userRepo.AddUserToGroup(req, ctx)
 }
 
@@ -137,6 +150,5 @@ func (uc *userUseCase) AddUserToRole(req dtos.AddUserToRoleRequest, ctx context.
 	if err != nil {
 		return models.NotFound("Role not found")
 	}
-
 	return uc.userRepo.AddUserToRole(req, ctx)
 }

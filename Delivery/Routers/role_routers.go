@@ -12,7 +12,8 @@ import (
 func NewRoleRouter(db *gorm.DB, env config.Env, router *gin.Engine) {
 
 	roleRepo := repository.NewRoleRepository(db)
-	roleUseCase := usecases.NewRoleUseCase(roleRepo)
+	userRepo := repository.NewUserRepository(db)
+	roleUseCase := usecases.NewRoleUseCase(roleRepo, userRepo)
 	roleHandler := controllers.NewRoleController(roleUseCase)
 
 	router.GET("/roles", roleHandler.GetAllRoles)
@@ -21,5 +22,4 @@ func NewRoleRouter(db *gorm.DB, env config.Env, router *gin.Engine) {
 	router.POST("/roles", roleHandler.CreateRole)
 	router.PUT("/roles/:id", roleHandler.UpdateRole)
 	router.DELETE("/roles/:id", roleHandler.DeleteRole)
-
 }

@@ -18,18 +18,28 @@ func NewGroupRepository(db *gorm.DB) interfaces.GroupRepository {
 	return &GroupRepository{db: db}
 }
 
-func (r *GroupRepository) GetAllGroups(ctx context.Context) ([]*models.Group, *models.ErrorResponse) {
+func (r *GroupRepository) GetAllGroups(ctx context.Context) ([]*dtos.GroupResponse, *models.ErrorResponse) {
 	var groups []*models.Group
 	if err := r.db.WithContext(ctx).Preload("Users").Find(&groups).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return []*models.Group{}, nil
+			return []*dtos.GroupResponse{}, nil
 		}
 		return nil, models.InternalServerError(err.Error())
 	}
-	return groups, nil
+
+	var result []*dtos.GroupResponse
+
+	for _, group := range groups {
+		result = append(result, &dtos.GroupResponse{
+			GID:  group.GID.String(),
+			Name: group.Name,
+		})
+
+	}
+	return result, nil
 }
 
-func (r *GroupRepository) GetGroupById(id string, ctx context.Context) (*models.Group, *models.ErrorResponse) {
+func (r *GroupRepository) GetGroupById(id string, ctx context.Context) (*dtos.GroupResponse, *models.ErrorResponse) {
 	gId, err := uuid.Parse(id)
 	if err != nil {
 		return nil, models.InternalServerError("Invalid UUID format")
@@ -41,10 +51,15 @@ func (r *GroupRepository) GetGroupById(id string, ctx context.Context) (*models.
 		}
 		return nil, models.InternalServerError(err.Error())
 	}
-	return &group, nil
+
+	result := dtos.GroupResponse{
+		GID:  group.GID.String(),
+		Name: group.Name,
+	}
+	return &result, nil
 }
 
-func (r *GroupRepository) GetGroupUsers(id string, ctx context.Context) ([]models.User, *models.ErrorResponse) {
+func (r *GroupRepository) GetGroupUsers(id string, ctx context.Context) ([]dtos.UserResponse, *models.ErrorResponse) {
 	var group models.Group
 	gId, err := uuid.Parse(id)
 	if err != nil {
@@ -58,7 +73,18 @@ func (r *GroupRepository) GetGroupUsers(id string, ctx context.Context) ([]model
 		return nil, models.InternalServerError(err.Error())
 	}
 
-	return group.Users, nil
+	var users []dtos.UserResponse
+
+	for _, user := range group.Users {
+		users = append(users, dtos.UserResponse{
+			UID:    user.UID.String(),
+			Name:   user.Name,
+			Email:  user.Email,
+			Status: user.Status,
+		})
+	}
+
+	return users, nil
 }
 
 func (r *GroupRepository) CreateGroup(group dtos.GroupCreateRequest, ctx context.Context) (*dtos.GroupResponse, *models.ErrorResponse) {

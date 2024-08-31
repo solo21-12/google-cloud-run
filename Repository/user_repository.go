@@ -20,7 +20,7 @@ func NewUserRepository(db *gorm.DB) interfaces.UserRepository {
 
 func (r *userRepository) GetAllUsers(ctx context.Context) ([]*dtos.UserResponse, *models.ErrorResponse) {
 	var users []*models.User
-	if err := r.db.WithContext(ctx).Preload("Groups.Users").Preload("Roles").Find(&users).Error; err != nil {
+	if err := r.db.WithContext(ctx).Preload("Groups").Preload("Role").Find(&users).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return []*dtos.UserResponse{}, nil
 		}
@@ -28,7 +28,6 @@ func (r *userRepository) GetAllUsers(ctx context.Context) ([]*dtos.UserResponse,
 	}
 
 	var result []*dtos.UserResponse
-
 	for _, user := range users {
 		result = append(result, &dtos.UserResponse{
 			UID:    user.UID.String(),
@@ -47,8 +46,8 @@ func (r *userRepository) GetUserById(id string, ctx context.Context) (*dtos.User
 	}
 	var user models.User
 	if err := r.db.WithContext(ctx).
-		Preload("Groups.Users").
-		Preload("Roles").
+		Preload("Groups").
+		Preload("Role").
 		First(&user, uId).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, models.NotFound("User not found")
@@ -56,11 +55,19 @@ func (r *userRepository) GetUserById(id string, ctx context.Context) (*dtos.User
 		return nil, models.InternalServerError(err.Error())
 	}
 
+	roleRes := dtos.RoleResponse{}
+	if user.Role != nil {
+		roleRes.RID = user.Role.RID.String()
+		roleRes.Name = user.Role.Name
+		roleRes.Rights = user.Role.Rights
+	}
+
 	var result dtos.UserResponseSingle
 	result.UID = user.UID.String()
 	result.Name = user.Name
 	result.Email = user.Email
 	result.Status = user.Status
+	result.Roles = roleRes
 
 	for _, group := range user.Groups {
 		result.Groups = append(result.Groups, dtos.GroupResponse{
@@ -74,7 +81,7 @@ func (r *userRepository) GetUserById(id string, ctx context.Context) (*dtos.User
 
 func (r *userRepository) GetUserByEmail(email string, ctx context.Context) (*models.User, *models.ErrorResponse) {
 	var user models.User
-	if err := r.db.WithContext(ctx).Preload("Groups").Preload("Roles").Where("email = ?", email).First(&user).Error; err != nil {
+	if err := r.db.WithContext(ctx).Preload("Groups").Preload("Role").Where("email = ?", email).First(&user).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, models.NotFound("User not found")
 		}
@@ -99,14 +106,13 @@ func (r *userRepository) GetUsersGroups(id string, ctx context.Context) ([]*dtos
 		}
 		return nil, models.InternalServerError(err.Error())
 	}
+
 	var groups []*dtos.GroupResponse
 	for _, group := range user.Groups {
-
 		groups = append(groups, &dtos.GroupResponse{
 			GID:  group.GID.String(),
 			Name: group.Name,
 		})
-
 	}
 
 	return groups, nil
@@ -132,7 +138,6 @@ func (repo *userRepository) SearchUsers(searchFields dtos.SearchFields, ctx cont
 	}
 
 	var result []*dtos.UserResponse
-
 	for _, user := range users {
 		result = append(result, &dtos.UserResponse{
 			UID:    user.UID.String(),
@@ -233,35 +238,34 @@ func (r *userRepository) AddUserToGroup(req dtos.AddUserToGroupRequest, ctx cont
 	return nil
 }
 
-func (r *userRepository) AddUserToRole(req dtos.AddUserToRoleRequest, ctx context.Context) *models.ErrorResponse {
+func (repo *userRepository) AddUserToRole(req dtos.AddUserToRoleRequest, ctx context.Context) *models.ErrorResponse {
+	var user models.User
+
+	// Parse UUIDs
+	rid, err := uuid.Parse(req.RoleId)
+	if err != nil {
+		return &models.ErrorResponse{Message: "Invalid UUID format for RoleId", Code: 500}
+	}
+
 	uId, err := uuid.Parse(req.UserId)
 	if err != nil {
-		return models.InternalServerError("Invalid UUID format")
+		return &models.ErrorResponse{Message: "Invalid UUID format for UserId", Code: 500}
 	}
 
-	rId, err := uuid.Parse(req.RoleId)
-	if err != nil {
-		return models.InternalServerError("Invalid UUID format")
+	// Find the user by UserId
+	if err := repo.db.WithContext(ctx).First(&user, "uid = ?", uId).Error; err != nil {
+		return &models.ErrorResponse{Message: "User not found", Code: 404}
 	}
 
-	var user models.User
-	if err := r.db.WithContext(ctx).First(&user, uId).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return models.NotFound("User not found")
-		}
-		return models.InternalServerError(err.Error())
+	// Check if the user already has the specified role
+	if user.RoleID != nil && *user.RoleID == rid {
+		return &models.ErrorResponse{Message: "User already has the specified role", Code: 400}
 	}
 
-	var role models.Role
-	if err := r.db.WithContext(ctx).First(&role, rId).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return models.NotFound("Role not found")
-		}
-		return models.InternalServerError(err.Error())
-	}
-
-	if err := r.db.WithContext(ctx).Model(&user).Association("Roles").Append(&role); err != nil {
-		return models.InternalServerError(err.Error())
+	// Update the user's RoleID
+	user.RoleID = &rid
+	if err := repo.db.WithContext(ctx).Save(&user).Error; err != nil {
+		return &models.ErrorResponse{Message: "Failed to update user role", Code: 500}
 	}
 
 	return nil

@@ -2,6 +2,8 @@ package repository
 
 import (
 	"context"
+	"encoding/json"
+
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 
@@ -17,42 +19,61 @@ type roleRepository struct {
 func NewRoleRepository(db *gorm.DB) interfaces.RoleRepository {
 	return &roleRepository{db: db}
 }
-
-func (r *roleRepository) GetAllRoles(ctx context.Context) ([]*models.Role, *models.ErrorResponse) {
+func (r *roleRepository) GetAllRoles(ctx context.Context) ([]*dtos.RoleResponse, *models.ErrorResponse) {
 	var roles []*models.Role
-	if err := r.db.WithContext(ctx).Preload("User").Find(&roles).Error; err != nil {
+	// Preload the correct association name, which is "Users"
+	if err := r.db.WithContext(ctx).Preload("Users").Find(&roles).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return []*models.Role{}, nil
+			return []*dtos.RoleResponse{}, nil
 		}
 		return nil, models.InternalServerError(err.Error())
 	}
-	return roles, nil
+
+	var result []*dtos.RoleResponse
+
+	for _, role := range roles {
+		result = append(result, &dtos.RoleResponse{
+			RID:    role.RID.String(),
+			Name:   role.Name,
+			Rights: role.Rights,
+		})
+	}
+	return result, nil
 }
 
-func (r *roleRepository) GetRoleById(id string, ctx context.Context) (*models.Role, *models.ErrorResponse) {
+func (r *roleRepository) GetRoleById(id string, ctx context.Context) (*dtos.RoleResponse, *models.ErrorResponse) {
 	roleId, err := uuid.Parse(id)
 	if err != nil {
 		return nil, models.InternalServerError("Invalid UUID format")
 	}
 	var role models.Role
-	if err := r.db.WithContext(ctx).Preload("User").First(&role, roleId).Error; err != nil {
+	// Preload the correct association name, which is "Users"
+	if err := r.db.WithContext(ctx).Preload("Users").First(&role, roleId).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, models.NotFound("Role not found")
 		}
 		return nil, models.InternalServerError(err.Error())
 	}
-	return &role, nil
+
+	return &dtos.RoleResponse{
+		RID:    role.RID.String(),
+		Name:   role.Name,
+		Rights: role.Rights,
+	}, nil
 }
 
 func (r *roleRepository) CreateRole(role dtos.RoleCreateRequest, ctx context.Context) (*dtos.RoleResponse, *models.ErrorResponse) {
+
 	newRole := models.Role{
 		RID:    uuid.New(),
 		Name:   role.Name,
 		Rights: role.Rights,
 	}
+
 	if err := r.db.WithContext(ctx).Create(&newRole).Error; err != nil {
 		return nil, models.InternalServerError(err.Error())
 	}
+
 	return &dtos.RoleResponse{
 		RID:    newRole.RID.String(),
 		Name:   newRole.Name,
@@ -96,11 +117,52 @@ func (r *roleRepository) DeleteRole(id string, ctx context.Context) *models.Erro
 	return nil
 }
 
+func (r *roleRepository) GetRoleUsers(role *dtos.RoleResponse, ctx context.Context) ([]*dtos.UserResponse, *models.ErrorResponse) {
+	var roleModel models.Role
 
-func (r *roleRepository) GetRoleUsers(role *models.Role, ctx context.Context) ([]*models.User, *models.ErrorResponse) {
-	var users []*models.User
-	if err := r.db.WithContext(ctx).Model(&role).Association("User").Find(&users); err != nil {
+	if err := r.db.WithContext(ctx).First(&roleModel, "r_id = ?", role.RID).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, models.NotFound("Role not found")
+		}
 		return nil, models.InternalServerError(err.Error())
 	}
-	return users, nil
+
+	var users []*models.User
+	if err := r.db.WithContext(ctx).Model(&roleModel).Association("Users").Find(&users); err != nil {
+		return nil, models.InternalServerError(err.Error())
+	}
+
+	result := make([]*dtos.UserResponse, len(users))
+	for i, user := range users {
+		result[i] = &dtos.UserResponse{
+			UID:    user.UID.String(),
+			Name:   user.Name,
+			Email:  user.Email,
+			Status: user.Status,
+		}
+	}
+
+	return result, nil
+}
+
+func (r *roleRepository) GetRoleByNameAndRights(rol dtos.RoleCreateRequest, ctx context.Context) (*models.Role, *models.ErrorResponse) {
+	var role models.Role
+
+	rightsJSON, err := json.Marshal(rol.Rights)
+	if err != nil {
+		return nil, models.InternalServerError("Error marshalling rights: " + err.Error())
+	}
+
+	rightsStr := string(rightsJSON)
+
+	if err := r.db.WithContext(ctx).
+		Where("name = ? AND rights::jsonb = ?", rol.Name, rightsStr).
+		First(&role).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, models.InternalServerError("Error querying role: " + err.Error())
+	}
+
+	return &role, nil
 }

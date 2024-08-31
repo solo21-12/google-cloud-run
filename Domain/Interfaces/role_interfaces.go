@@ -18,19 +18,21 @@ type RoleController interface {
 }
 
 type RoleUseCase interface {
-	GetAllRoles(ctx context.Context) ([]*models.Role, *models.ErrorResponse)
-	GetRoleById(id string, ctx context.Context) (*models.Role, *models.ErrorResponse)
+	GetAllRoles(ctx context.Context) ([]*dtos.RoleResponse, *models.ErrorResponse)
+	GetRoleById(id string, ctx context.Context) (*dtos.RoleResponse, *models.ErrorResponse)
 	CreateRole(role dtos.RoleCreateRequest, ctx context.Context) (*dtos.RoleResponse, *models.ErrorResponse)
 	UpdateRole(id string, role dtos.RoleUpdateRequest, ctx context.Context) (*dtos.RoleResponse, *models.ErrorResponse)
 	DeleteRole(id string, ctx context.Context) *models.ErrorResponse
-	GetRoleUsers(id string, ctx context.Context) ([]*models.User, *models.ErrorResponse)
+	GetRoleUsers(id string, ctx context.Context) ([]*dtos.UserResponse, *models.ErrorResponse)
 }
 
 type RoleRepository interface {
-	GetAllRoles(ctx context.Context) ([]*models.Role, *models.ErrorResponse)
-	GetRoleById(id string, ctx context.Context) (*models.Role, *models.ErrorResponse)
+	GetAllRoles(ctx context.Context) ([]*dtos.RoleResponse, *models.ErrorResponse)
+	GetRoleById(id string, ctx context.Context) (*dtos.RoleResponse, *models.ErrorResponse)
 	CreateRole(role dtos.RoleCreateRequest, ctx context.Context) (*dtos.RoleResponse, *models.ErrorResponse)
 	UpdateRole(id string, role dtos.RoleUpdateRequest, ctx context.Context) (*dtos.RoleResponse, *models.ErrorResponse)
 	DeleteRole(id string, ctx context.Context) *models.ErrorResponse
-	GetRoleUsers(role *models.Role, ctx context.Context) ([]*models.User, *models.ErrorResponse)
+	GetRoleUsers(role *dtos.RoleResponse, ctx context.Context) ([]*dtos.UserResponse, *models.ErrorResponse)
+	GetRoleByNameAndRights(role dtos.RoleCreateRequest, ctx context.Context) (*models.Role, *models.ErrorResponse)
+	
 }

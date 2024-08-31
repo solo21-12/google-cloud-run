@@ -35,7 +35,7 @@ type UserResponseSingle struct {
 	Email  string          `json:"email"`
 	Status int             `json:"status"`
 	Groups []GroupResponse `json:"groups"`
-	Roles  []RoleResponse  `json:"roles"`
+	Roles  RoleResponse  `json:"roles"`
 }
 
 type SearchFields struct {
@@ -44,12 +44,3 @@ type SearchFields struct {
 	OrderBy string `json:"orderBy"`
 }
 
-type LoginRequest struct {
-	Email    string `json:"username_or_email" validate:"required"`
-	Password string `json:"password" validate:"required"`
-}
-
-type LoginResponse struct {
-	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token"`
-}
