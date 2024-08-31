@@ -62,6 +62,7 @@ func (r *roleRepository) GetRoleById(id string, ctx context.Context) (*dtos.Role
 	}, nil
 }
 
+
 func (r *roleRepository) CreateRole(role dtos.RoleCreateRequest, ctx context.Context) (*dtos.RoleResponse, *models.ErrorResponse) {
 
 	newRole := models.Role{
@@ -106,16 +107,25 @@ func (r *roleRepository) UpdateRole(id string, role dtos.RoleUpdateRequest, ctx 
 }
 
 func (r *roleRepository) DeleteRole(id string, ctx context.Context) *models.ErrorResponse {
-	roleId, err := uuid.Parse(id)
-	if err != nil {
-		return models.InternalServerError("Invalid UUID format")
-	}
+    roleId, err := uuid.Parse(id)
+    if err != nil {
+        return models.InternalServerError("Invalid UUID format")
+    }
 
-	if err := r.db.WithContext(ctx).Delete(&models.Role{}, roleId).Error; err != nil {
-		return models.InternalServerError(err.Error())
-	}
-	return nil
+    // Explicitly set RoleID to NULL for all users associated with this role
+    if err := r.db.WithContext(ctx).Model(&models.User{}).Where("role_id = ?", roleId).Update("role_id", gorm.Expr("NULL")).Error; err != nil {
+        return models.InternalServerError("Failed to dissociate users from role: " + err.Error())
+    }
+
+    // Now, safely delete the role
+    if err := r.db.WithContext(ctx).Delete(&models.Role{}, roleId).Error; err != nil {
+        return models.InternalServerError("Failed to delete role: " + err.Error())
+    }
+
+    return nil
 }
+
+
 
 func (r *roleRepository) GetRoleUsers(role *dtos.RoleResponse, ctx context.Context) ([]*dtos.UserResponse, *models.ErrorResponse) {
 	var roleModel models.Role

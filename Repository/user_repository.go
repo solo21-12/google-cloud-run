@@ -44,6 +44,7 @@ func (r *userRepository) GetUserById(id string, ctx context.Context) (*dtos.User
 	if err != nil {
 		return nil, models.InternalServerError("Invalid UUID format")
 	}
+
 	var user models.User
 	if err := r.db.WithContext(ctx).
 		Preload("Groups").
@@ -55,11 +56,13 @@ func (r *userRepository) GetUserById(id string, ctx context.Context) (*dtos.User
 		return nil, models.InternalServerError(err.Error())
 	}
 
-	roleRes := dtos.RoleResponse{}
+	var roleRes *dtos.RoleResponse
 	if user.Role != nil {
-		roleRes.RID = user.Role.RID.String()
-		roleRes.Name = user.Role.Name
-		roleRes.Rights = user.Role.Rights
+		roleRes = &dtos.RoleResponse{
+			RID:    user.Role.RID.String(),
+			Name:   user.Role.Name,
+			Rights: user.Role.Rights,
+		}
 	}
 
 	var result dtos.UserResponseSingle

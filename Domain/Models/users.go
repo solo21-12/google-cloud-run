@@ -8,6 +8,6 @@ type User struct {
 	Email  string     `gorm:"unique" json:"email"`
 	Status int        `json:"status"`
 	Groups []*Group   `gorm:"many2many:user_groups;" json:"groups"`
-	RoleID *uuid.UUID `gorm:"index" json:"role_id"` // RoleID as a pointer to allow NULL
-	Role   *Role      `gorm:"foreignKey:RoleID" json:"role,omitempty"` // Role is optional
+	RoleID *uuid.UUID `gorm:"index;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;" json:"role_id"`
+	Role   *Role      `gorm:"foreignKey:RoleID" json:"role,omitempty"`
 }
