@@ -69,9 +69,7 @@ func (j *JwtService) GenerateToken(database string) (string, error) {
 			ExpiresAt: time.Now().Add(expiresIn).Unix(),
 		},
 	}
-
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
 	tokenStr, err := token.SignedString([]byte(j.Env.JWT_SECRET))
 	if err != nil {
 		return "", err

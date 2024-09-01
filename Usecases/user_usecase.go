@@ -28,7 +28,7 @@ func NewUserUseCase(
 	}
 }
 
-func (uc *userUseCase) checkEmailExists(email string, ctx *gin.Context) (*models.User, *models.ErrorResponse) {
+func (uc *userUseCase) CheckEmailExists(email string, ctx *gin.Context) (*models.User, *models.ErrorResponse) {
 	existingUser, err := uc.userRepo.GetUserByEmail(email, ctx)
 	if existingUser != nil && err == nil {
 		return existingUser, models.BadRequest("User already exists")
@@ -36,7 +36,7 @@ func (uc *userUseCase) checkEmailExists(email string, ctx *gin.Context) (*models
 	return nil, nil
 }
 
-func (uc *userUseCase) validateEmail(email string) *models.ErrorResponse {
+func (uc *userUseCase) ValidateEmail(email string) *models.ErrorResponse {
 	if valid := uc.emailService.IsValidEmail(email); !valid {
 		return models.BadRequest("Invalid email")
 	}
@@ -60,11 +60,11 @@ func (uc *userUseCase) SearchUsers(searchFields dtos.SearchFields, ctx *gin.Cont
 }
 
 func (uc *userUseCase) CreateUser(user dtos.UserCreateRequest, ctx *gin.Context) (*dtos.UserResponse, *models.ErrorResponse) {
-	if _, err := uc.checkEmailExists(user.Email, ctx); err != nil {
+	if _, err := uc.CheckEmailExists(user.Email, ctx); err != nil {
 		return nil, err
 	}
 
-	if err := uc.validateEmail(user.Email); err != nil {
+	if err := uc.ValidateEmail(user.Email); err != nil {
 		return nil, err
 	}
 
@@ -82,7 +82,7 @@ func (uc *userUseCase) UpdateUser(id string, user dtos.UserUpdateRequest, ctx *g
 	}
 
 	if user.Email != "" {
-		if err := uc.validateEmail(user.Email); err != nil {
+		if err := uc.ValidateEmail(user.Email); err != nil {
 			return nil, err
 		}
 		userToUpdate.Email = user.Email

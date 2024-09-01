@@ -32,7 +32,6 @@ func DatabaseMiddleware(env *config.Env, jwtService interfaces.JwtService) gin.H
 			return
 		}
 
-		// Get database name from token claims
 		dbName := claims.Database
 		if dbName == "" {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Database name missing in token"})
@@ -40,13 +39,10 @@ func DatabaseMiddleware(env *config.Env, jwtService interfaces.JwtService) gin.H
 			return
 		}
 
-		// Create a new database client for the requested database
 		db := config.NewPostgresConfig(*env)
 		client := db.Client(dbName)
 
-		// Set the database client in the context
 		c.Set("dbClient", client)
-
 		c.Next()
 	}
 }

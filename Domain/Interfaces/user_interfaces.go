@@ -18,6 +18,8 @@ type UserController interface {
 }
 
 type UserUseCase interface {
+	ValidateEmail(email string) *models.ErrorResponse
+	CheckEmailExists(email string, ctx *gin.Context) (*models.User, *models.ErrorResponse)
 	GetAllUsers(ctx *gin.Context) ([]*dtos.UserResponse, *models.ErrorResponse)
 	GetUserById(id string, ctx *gin.Context) (*dtos.UserResponseSingle, *models.ErrorResponse)
 	GetUsersGroup(id string, ctx *gin.Context) ([]*dtos.GroupResponse, *models.ErrorResponse)
