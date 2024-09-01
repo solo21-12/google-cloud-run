@@ -99,7 +99,7 @@ func (suite *UserUsecaseTestSuite) TestGetUserByID_Success() {
 func (suite *UserUsecaseTestSuite) TestSearchUsers_Success() {
 	ctx := &gin.Context{}
 	searchFields := dtos.SearchFields{
-		Search: "Test",
+		Name: "Test",
 	}
 	expectedUsers := []*dtos.UserResponse{
 		{

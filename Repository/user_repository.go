@@ -157,7 +157,7 @@ func (repo *userRepository) SearchUsers(searchFields dtos.SearchFields, ctx *gin
 		return nil, models.InternalServerError(err.Error())
 	}
 
-	query := db.Where("name ILIKE ?", "%"+searchFields.Search+"%")
+	query := db.Where("name ILIKE ?", "%"+searchFields.Name+"%")
 
 	if searchFields.OrderBy != "" {
 		query = query.Order(searchFields.OrderBy)

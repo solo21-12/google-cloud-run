@@ -21,12 +21,12 @@ func NewUserController(usecase interfaces.UserUseCase) interfaces.UserController
 }
 
 func (uc *userController) isSearch(srarchField dtos.SearchFields) bool {
-	return srarchField.Search != "" || srarchField.OrderBy != "" || srarchField.Limit != 10
+	return srarchField.Name != "" || srarchField.OrderBy != "" || srarchField.Limit != 10
 }
 
 func (uc *userController) GetUsers(c *gin.Context) {
 	searchFields := dtos.SearchFields{
-		Search:  c.Query("search"),
+		Name:  c.Query("name"),
 		Limit:   10,
 		OrderBy: c.Query("orderby"),
 	}

@@ -39,7 +39,7 @@ type UserResponseSingle struct {
 }
 
 type SearchFields struct {
-	Search  string `json:"search"`
+	Name  string `json:"Name"`
 	Limit   int    `json:"limit"`
 	OrderBy string `json:"orderBy"`
 }
