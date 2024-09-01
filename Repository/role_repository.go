@@ -1,9 +1,9 @@
 package repository
 
 import (
-	"context"
 	"encoding/json"
 
+	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 
@@ -13,15 +13,36 @@ import (
 )
 
 type roleRepository struct {
-	db *gorm.DB
 }
 
-func NewRoleRepository(db *gorm.DB) interfaces.RoleRepository {
-	return &roleRepository{db: db}
+func NewRoleRepository() interfaces.RoleRepository {
+	return &roleRepository{}
 }
-func (r *roleRepository) GetAllRoles(ctx context.Context) ([]*dtos.RoleResponse, *models.ErrorResponse) {
+
+func (r *roleRepository) getDB(ctx *gin.Context) (*gorm.DB, error) {
+
+	db, exists := ctx.Get("dbClient")
+	if !exists {
+		return nil, models.InternalServerError("Database connection not found")
+	}
+
+	dbClient, ok := db.(*gorm.DB)
+	if !ok {
+		return nil, models.InternalServerError("Invalid database connection")
+	}
+
+	return dbClient, nil
+}
+
+func (r *roleRepository) GetAllRoles(ctx *gin.Context) ([]*dtos.RoleResponse, *models.ErrorResponse) {
 	var roles []*models.Role
-	if err := r.db.WithContext(ctx).Preload("Users").Find(&roles).Error; err != nil {
+	db, err := r.getDB(ctx)
+
+	if err != nil {
+		return nil, models.InternalServerError(err.Error())
+	}
+
+	if err := db.WithContext(ctx).Preload("Users").Find(&roles).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return []*dtos.RoleResponse{}, nil
 		}
@@ -40,10 +61,15 @@ func (r *roleRepository) GetAllRoles(ctx context.Context) ([]*dtos.RoleResponse,
 	return result, nil
 }
 
-func (r *roleRepository) GetRoleById(uid string, ctx context.Context) (*dtos.RoleResponse, *models.ErrorResponse) {
+func (r *roleRepository) GetRoleById(uid string, ctx *gin.Context) (*dtos.RoleResponse, *models.ErrorResponse) {
 
 	var role models.Role
-	if err := r.db.WithContext(ctx).
+	db, err := r.getDB(ctx)
+
+	if err != nil {
+		return nil, models.InternalServerError(err.Error())
+	}
+	if err := db.WithContext(ctx).
 		Preload("Users").
 		Where("r_id = ?", uid).
 		First(&role).Error; err != nil {
@@ -60,15 +86,19 @@ func (r *roleRepository) GetRoleById(uid string, ctx context.Context) (*dtos.Rol
 	}, nil
 }
 
-func (r *roleRepository) CreateRole(role dtos.RoleCreateRequest, ctx context.Context) (*dtos.RoleResponse, *models.ErrorResponse) {
+func (r *roleRepository) CreateRole(role dtos.RoleCreateRequest, ctx *gin.Context) (*dtos.RoleResponse, *models.ErrorResponse) {
+	db, err := r.getDB(ctx)
 
+	if err != nil {
+		return nil, models.InternalServerError(err.Error())
+	}
 	newRole := models.Role{
 		RID:    uuid.New(),
 		Name:   role.Name,
 		Rights: role.Rights,
 	}
 
-	if err := r.db.WithContext(ctx).Create(&newRole).Error; err != nil {
+	if err := db.WithContext(ctx).Create(&newRole).Error; err != nil {
 		return nil, models.InternalServerError(err.Error())
 	}
 
@@ -79,10 +109,14 @@ func (r *roleRepository) CreateRole(role dtos.RoleCreateRequest, ctx context.Con
 	}, nil
 }
 
-func (r *roleRepository) UpdateRole(uid string, role dtos.RoleUpdateRequest, ctx context.Context) (*dtos.RoleResponse, *models.ErrorResponse) {
+func (r *roleRepository) UpdateRole(uid string, role dtos.RoleUpdateRequest, ctx *gin.Context) (*dtos.RoleResponse, *models.ErrorResponse) {
+	db, err := r.getDB(ctx)
 
+	if err != nil {
+		return nil, models.InternalServerError(err.Error())
+	}
 	var existingRole models.Role
-	if err := r.db.WithContext(ctx).
+	if err := db.WithContext(ctx).
 		Where("r_id = ?", uid).
 		First(&existingRole).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -94,7 +128,7 @@ func (r *roleRepository) UpdateRole(uid string, role dtos.RoleUpdateRequest, ctx
 	existingRole.Name = role.Name
 	existingRole.Rights = role.Rights
 
-	if err := r.db.WithContext(ctx).Save(&existingRole).Error; err != nil {
+	if err := db.WithContext(ctx).Save(&existingRole).Error; err != nil {
 		return nil, models.InternalServerError(err.Error())
 	}
 
@@ -105,14 +139,19 @@ func (r *roleRepository) UpdateRole(uid string, role dtos.RoleUpdateRequest, ctx
 	}, nil
 }
 
-func (r *roleRepository) DeleteRole(rid string, ctx context.Context) *models.ErrorResponse {
+func (r *roleRepository) DeleteRole(rid string, ctx *gin.Context) *models.ErrorResponse {
+	db, err := r.getDB(ctx)
+
+	if err != nil {
+		return models.InternalServerError(err.Error())
+	}
 	roleRID, err := uuid.Parse(rid)
 	if err != nil {
 		return models.InternalServerError("Invalid UUID format")
 	}
 
 	var role models.Role
-	if err := r.db.WithContext(ctx).
+	if err := db.WithContext(ctx).
 		Where("r_id = ?", roleRID).
 		First(&role).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -121,13 +160,13 @@ func (r *roleRepository) DeleteRole(rid string, ctx context.Context) *models.Err
 		return models.InternalServerError("Failed to fetch role: " + err.Error())
 	}
 
-	if err := r.db.WithContext(ctx).Model(&models.User{}).
+	if err := db.WithContext(ctx).Model(&models.User{}).
 		Where("role_id = ?", role.ID).
 		Update("role_id", gorm.Expr("NULL")).Error; err != nil {
 		return models.InternalServerError("Failed to dissociate users from role: " + err.Error())
 	}
 
-	if err := r.db.WithContext(ctx).
+	if err := db.WithContext(ctx).
 		Where("r_id = ?", roleRID).
 		Delete(&models.Role{}).Error; err != nil {
 		return models.InternalServerError("Failed to delete role: " + err.Error())
@@ -136,10 +175,15 @@ func (r *roleRepository) DeleteRole(rid string, ctx context.Context) *models.Err
 	return nil
 }
 
-func (r *roleRepository) GetRoleUsers(role *dtos.RoleResponse, ctx context.Context) ([]*dtos.UserResponse, *models.ErrorResponse) {
+func (r *roleRepository) GetRoleUsers(role *dtos.RoleResponse, ctx *gin.Context) ([]*dtos.UserResponse, *models.ErrorResponse) {
 	var roleModel models.Role
+	db, err := r.getDB(ctx)
 
-	if err := r.db.WithContext(ctx).First(&roleModel, "r_id = ?", role.RID).Error; err != nil {
+	if err != nil {
+		return nil, models.InternalServerError(err.Error())
+	}
+
+	if err := db.WithContext(ctx).First(&roleModel, "r_id = ?", role.RID).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, models.NotFound("Role not found")
 		}
@@ -147,7 +191,7 @@ func (r *roleRepository) GetRoleUsers(role *dtos.RoleResponse, ctx context.Conte
 	}
 
 	var users []*models.User
-	if err := r.db.WithContext(ctx).Model(&roleModel).Association("Users").Find(&users); err != nil {
+	if err := db.WithContext(ctx).Model(&roleModel).Association("Users").Find(&users); err != nil {
 		return nil, models.InternalServerError(err.Error())
 	}
 
@@ -164,8 +208,13 @@ func (r *roleRepository) GetRoleUsers(role *dtos.RoleResponse, ctx context.Conte
 	return result, nil
 }
 
-func (r *roleRepository) GetRoleByNameAndRights(rol dtos.RoleCreateRequest, ctx context.Context) (*models.Role, *models.ErrorResponse) {
+func (r *roleRepository) GetRoleByNameAndRights(rol dtos.RoleCreateRequest, ctx *gin.Context) (*models.Role, *models.ErrorResponse) {
 	var role models.Role
+	db, err := r.getDB(ctx)
+
+	if err != nil {
+		return nil, models.InternalServerError(err.Error())
+	}
 
 	rightsJSON, err := json.Marshal(rol.Rights)
 	if err != nil {
@@ -174,7 +223,7 @@ func (r *roleRepository) GetRoleByNameAndRights(rol dtos.RoleCreateRequest, ctx 
 
 	rightsStr := string(rightsJSON)
 
-	if err := r.db.WithContext(ctx).
+	if err := db.WithContext(ctx).
 		Where("name = ? AND rights::jsonb = ?", rol.Name, rightsStr).
 		First(&role).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {

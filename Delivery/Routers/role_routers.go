@@ -6,13 +6,12 @@ import (
 	repository "github.com/google-run-code/Repository"
 	usecases "github.com/google-run-code/Usecases"
 	"github.com/google-run-code/config"
-	"gorm.io/gorm"
 )
 
-func NewRoleRouter(db *gorm.DB, env config.Env, router *gin.Engine) {
+func NewRoleRouter(env config.Env, router *gin.RouterGroup) {
 
-	roleRepo := repository.NewRoleRepository(db)
-	userRepo := repository.NewUserRepository(db)
+	roleRepo := repository.NewRoleRepository()
+	userRepo := repository.NewUserRepository()
 	roleUseCase := usecases.NewRoleUseCase(roleRepo, userRepo)
 	roleHandler := controllers.NewRoleController(roleUseCase)
 

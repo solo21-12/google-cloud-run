@@ -1,18 +1,17 @@
 package usecases
 
 import (
-	"context"
-
+	"github.com/gin-gonic/gin"
 	dtos "github.com/google-run-code/Domain/Dtos"
 	interfaces "github.com/google-run-code/Domain/Interfaces"
 	models "github.com/google-run-code/Domain/Models"
 )
 
 type userUseCase struct {
-	userRepo        interfaces.UserRepository
-	roleRepo        interfaces.RoleRepository
-	groupRepo       interfaces.GroupRepository
-	emailService    interfaces.EmailService
+	userRepo     interfaces.UserRepository
+	roleRepo     interfaces.RoleRepository
+	groupRepo    interfaces.GroupRepository
+	emailService interfaces.EmailService
 }
 
 func NewUserUseCase(
@@ -29,7 +28,7 @@ func NewUserUseCase(
 	}
 }
 
-func (uc *userUseCase) checkEmailExists(email string, ctx context.Context) (*models.User, *models.ErrorResponse) {
+func (uc *userUseCase) checkEmailExists(email string, ctx *gin.Context) (*models.User, *models.ErrorResponse) {
 	existingUser, err := uc.userRepo.GetUserByEmail(email, ctx)
 	if existingUser != nil && err == nil {
 		return existingUser, models.BadRequest("User already exists")
@@ -44,23 +43,23 @@ func (uc *userUseCase) validateEmail(email string) *models.ErrorResponse {
 	return nil
 }
 
-func (uc *userUseCase) GetAllUsers(ctx context.Context) ([]*dtos.UserResponse, *models.ErrorResponse) {
+func (uc *userUseCase) GetAllUsers(ctx *gin.Context) ([]*dtos.UserResponse, *models.ErrorResponse) {
 	return uc.userRepo.GetAllUsers(ctx)
 }
 
-func (uc *userUseCase) GetUserById(id string, ctx context.Context) (*dtos.UserResponseSingle, *models.ErrorResponse) {
+func (uc *userUseCase) GetUserById(id string, ctx *gin.Context) (*dtos.UserResponseSingle, *models.ErrorResponse) {
 	return uc.userRepo.GetUserById(id, ctx)
 }
 
-func (uc *userUseCase) GetUsersGroup(id string, ctx context.Context) ([]*dtos.GroupResponse, *models.ErrorResponse) {
+func (uc *userUseCase) GetUsersGroup(id string, ctx *gin.Context) ([]*dtos.GroupResponse, *models.ErrorResponse) {
 	return uc.userRepo.GetUsersGroups(id, ctx)
 }
 
-func (uc *userUseCase) SearchUsers(searchFields dtos.SearchFields, ctx context.Context) ([]*dtos.UserResponse, *models.ErrorResponse) {
+func (uc *userUseCase) SearchUsers(searchFields dtos.SearchFields, ctx *gin.Context) ([]*dtos.UserResponse, *models.ErrorResponse) {
 	return uc.userRepo.SearchUsers(searchFields, ctx)
 }
 
-func (uc *userUseCase) CreateUser(user dtos.UserCreateRequest, ctx context.Context) (*dtos.UserResponse, *models.ErrorResponse) {
+func (uc *userUseCase) CreateUser(user dtos.UserCreateRequest, ctx *gin.Context) (*dtos.UserResponse, *models.ErrorResponse) {
 	if _, err := uc.checkEmailExists(user.Email, ctx); err != nil {
 		return nil, err
 	}
@@ -72,7 +71,7 @@ func (uc *userUseCase) CreateUser(user dtos.UserCreateRequest, ctx context.Conte
 	return uc.userRepo.CreateUser(user, ctx)
 }
 
-func (uc *userUseCase) UpdateUser(id string, user dtos.UserUpdateRequest, ctx context.Context) (*dtos.UserResponse, *models.ErrorResponse) {
+func (uc *userUseCase) UpdateUser(id string, user dtos.UserUpdateRequest, ctx *gin.Context) (*dtos.UserResponse, *models.ErrorResponse) {
 	userToUpdate, err := uc.userRepo.GetUserById(id, ctx)
 	if userToUpdate == nil && err != nil {
 		return nil, models.NotFound("User not found")
@@ -101,7 +100,7 @@ func (uc *userUseCase) UpdateUser(id string, user dtos.UserUpdateRequest, ctx co
 	return uc.userRepo.UpdateUser(id, updateUs, ctx)
 }
 
-func (uc *userUseCase) DeleteUser(id string, ctx context.Context) *models.ErrorResponse {
+func (uc *userUseCase) DeleteUser(id string, ctx *gin.Context) *models.ErrorResponse {
 	_, err := uc.userRepo.GetUserById(id, ctx)
 	if err != nil {
 		return models.NotFound("User not found")
@@ -110,7 +109,7 @@ func (uc *userUseCase) DeleteUser(id string, ctx context.Context) *models.ErrorR
 	return uc.userRepo.DeleteUser(id, ctx)
 }
 
-func (uc *userUseCase) AddUserToGroup(req dtos.AddUserToGroupRequest, ctx context.Context) *models.ErrorResponse {
+func (uc *userUseCase) AddUserToGroup(req dtos.AddUserToGroupRequest, ctx *gin.Context) *models.ErrorResponse {
 	// Check if the user exists
 	_, err := uc.userRepo.GetUserById(req.UserId, ctx)
 	if err != nil {
@@ -140,7 +139,7 @@ func (uc *userUseCase) AddUserToGroup(req dtos.AddUserToGroupRequest, ctx contex
 	return uc.userRepo.AddUserToGroup(req, ctx)
 }
 
-func (uc *userUseCase) AddUserToRole(req dtos.AddUserToRoleRequest, ctx context.Context) *models.ErrorResponse {
+func (uc *userUseCase) AddUserToRole(req dtos.AddUserToRoleRequest, ctx *gin.Context) *models.ErrorResponse {
 	_, err := uc.userRepo.GetUserById(req.UserId, ctx)
 	if err != nil {
 		return models.NotFound("User not found")

@@ -19,7 +19,7 @@ func NewGroupController(usecase interfaces.GroupUseCase) interfaces.GroupControl
 }
 
 func (gc *groupController) GetAllGroups(c *gin.Context) {
-	groups, errResp := gc.usecase.GetAllGroups(c.Request.Context())
+	groups, errResp := gc.usecase.GetAllGroups(c)
 
 	if errResp != nil {
 		c.IndentedJSON(errResp.Code, gin.H{"error": errResp.Message})
@@ -31,7 +31,7 @@ func (gc *groupController) GetAllGroups(c *gin.Context) {
 
 func (gc *groupController) GetGroupById(c *gin.Context) {
 	id := c.Param("id")
-	group, errResp := gc.usecase.GetGroupById(id, c.Request.Context())
+	group, errResp := gc.usecase.GetGroupById(id, c)
 
 	if errResp != nil {
 		c.IndentedJSON(errResp.Code, gin.H{"error": errResp.Message})
@@ -44,7 +44,7 @@ func (gc *groupController) GetGroupById(c *gin.Context) {
 func (gc *groupController) GetGroupUsers(c *gin.Context) {
 	id := c.Param("id")
 
-	users, errResp := gc.usecase.GetGroupUsers(id, c.Request.Context())
+	users, errResp := gc.usecase.GetGroupUsers(id, c)
 
 	if errResp != nil {
 		c.IndentedJSON(errResp.Code, gin.H{"error": errResp.Message})
@@ -62,7 +62,7 @@ func (gc *groupController) CreateGroup(c *gin.Context) {
 		return
 	}
 
-	groupResponse, errResp := gc.usecase.CreateGroup(group, c.Request.Context())
+	groupResponse, errResp := gc.usecase.CreateGroup(group, c)
 
 	if errResp != nil {
 		c.IndentedJSON(errResp.Code, gin.H{"error": errResp.Message})
@@ -81,7 +81,7 @@ func (gc *groupController) UpdateGroup(c *gin.Context) {
 		return
 	}
 
-	groupResponse, errResp := gc.usecase.UpdateGroup(id, group, c.Request.Context())
+	groupResponse, errResp := gc.usecase.UpdateGroup(id, group, c)
 
 	if errResp != nil {
 		c.IndentedJSON(errResp.Code, gin.H{"error": errResp.Message})
@@ -94,7 +94,7 @@ func (gc *groupController) UpdateGroup(c *gin.Context) {
 func (gc *groupController) DeleteGroup(c *gin.Context) {
 	id := c.Param("id")
 
-	errResp := gc.usecase.DeleteGroup(id, c.Request.Context())
+	errResp := gc.usecase.DeleteGroup(id, c)
 
 	if errResp != nil {
 		c.IndentedJSON(errResp.Code, gin.H{"error": errResp.Message})

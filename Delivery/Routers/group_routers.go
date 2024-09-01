@@ -6,12 +6,11 @@ import (
 	repository "github.com/google-run-code/Repository"
 	usecases "github.com/google-run-code/Usecases"
 	"github.com/google-run-code/config"
-	"gorm.io/gorm"
 )
 
-func NewGroupRouter(db *gorm.DB, env config.Env, router *gin.Engine) {
+func NewGroupRouter(env config.Env, router *gin.RouterGroup) {
 
-	groupRepo := repository.NewGroupRepository(db)
+	groupRepo := repository.NewGroupRepository()
 	groupUseCase := usecases.NewGroupUseCase(groupRepo)
 	groupHandler := controllers.NewGroupController(groupUseCase)
 

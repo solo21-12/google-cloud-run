@@ -17,17 +17,15 @@ func NewPostgresConfig(env Env) *PostgresConfig {
 	return &PostgresConfig{env: env}
 }
 
-func (p *PostgresConfig) BuildDBURL(databaseName string) string {
-	// Debugging: Log environment variables
-	log.Printf("DB_USER: %s, DB_PASS: %s, DB_HOST: %s, DB_PORT: %s, DB_NAME: %s",
-		p.env.DB_USER, p.env.DB_PASS, p.env.DB_HOST, p.env.DB_PORT, databaseName)
+func (p *PostgresConfig) isValid() bool {
+	return p.env.DB_USER != "" && p.env.DB_PASS != "" && p.env.DB_HOST != "" && p.env.DB_PORT != ""
+}
 
-	// Check if any of the environment variables are missing
-	if p.env.DB_USER == "" || p.env.DB_PASS == "" || p.env.DB_HOST == "" || p.env.DB_PORT == "" {
+func (p *PostgresConfig) BuildDBURL(databaseName string) string {
+	if !p.isValid() {
 		log.Fatalf("Missing one or more required environment variables: DB_USER, DB_PASS, DB_HOST, DB_PORT")
 	}
 
-	// Construct the PostgreSQL DSN (Data Source Name)
 	dsn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
 		p.env.DB_USER, p.env.DB_PASS, p.env.DB_HOST, p.env.DB_PORT, databaseName)
 
@@ -49,8 +47,8 @@ func (p *PostgresConfig) Client(databaseName string) *gorm.DB {
 	return p.db
 }
 
-func (p *PostgresConfig) Close() {
-	sqlDB, err := p.Client(p.env.DB_NAME).DB()
+func (p *PostgresConfig) Close(databaseName string) {
+	sqlDB, err := p.Client(databaseName).DB()
 	if err != nil {
 		log.Fatalf("Failed to get database instance: %v", err)
 	}
@@ -61,8 +59,8 @@ func (p *PostgresConfig) Close() {
 	}
 }
 
-func (p *PostgresConfig) Migrate(models ...interface{}) {
-	db := p.Client(p.env.DB_NAME)
+func (p *PostgresConfig) Migrate(databaseName string, models ...interface{}) {
+	db := p.Client(databaseName)
 	err := db.AutoMigrate(models...)
 	if err != nil {
 		log.Fatalf("Failed to migrate database schema: %v", err)

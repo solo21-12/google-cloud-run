@@ -1,8 +1,7 @@
 package usecases
 
 import (
-	"context"
-
+	"github.com/gin-gonic/gin"
 	dtos "github.com/google-run-code/Domain/Dtos"
 	interfaces "github.com/google-run-code/Domain/Interfaces"
 	models "github.com/google-run-code/Domain/Models"
@@ -18,7 +17,7 @@ func NewGroupUseCase(groupRepo interfaces.GroupRepository) interfaces.GroupUseCa
 	}
 }
 
-func (uc *groupUseCase) checkGroupExists(id string, ctx context.Context) (*dtos.GroupResponse, *models.ErrorResponse) {
+func (uc *groupUseCase) checkGroupExists(id string, ctx *gin.Context) (*dtos.GroupResponse, *models.ErrorResponse) {
 	group, err := uc.groupRepo.GetGroupById(id, ctx)
 	if err != nil {
 		return nil, err
@@ -26,15 +25,15 @@ func (uc *groupUseCase) checkGroupExists(id string, ctx context.Context) (*dtos.
 	return group, nil
 }
 
-func (uc *groupUseCase) GetAllGroups(ctx context.Context) ([]*dtos.GroupResponse, *models.ErrorResponse) {
+func (uc *groupUseCase) GetAllGroups(ctx *gin.Context) ([]*dtos.GroupResponse, *models.ErrorResponse) {
 	return uc.groupRepo.GetAllGroups(ctx)
 }
 
-func (uc *groupUseCase) GetGroupById(id string, ctx context.Context) (*dtos.GroupResponse, *models.ErrorResponse) {
+func (uc *groupUseCase) GetGroupById(id string, ctx *gin.Context) (*dtos.GroupResponse, *models.ErrorResponse) {
 	return uc.checkGroupExists(id, ctx)
 }
 
-func (uc *groupUseCase) GetGroupUsers(id string, ctx context.Context) ([]dtos.UserResponse, *models.ErrorResponse) {
+func (uc *groupUseCase) GetGroupUsers(id string, ctx *gin.Context) ([]dtos.UserResponse, *models.ErrorResponse) {
 	_, err := uc.checkGroupExists(id, ctx)
 	if err != nil {
 		return nil, err
@@ -48,21 +47,21 @@ func (uc *groupUseCase) GetGroupUsers(id string, ctx context.Context) ([]dtos.Us
 	return users, nil
 }
 
-func (uc *groupUseCase) CreateGroup(group dtos.GroupCreateRequest, ctx context.Context) (*dtos.GroupResponse, *models.ErrorResponse) {
+func (uc *groupUseCase) CreateGroup(group dtos.GroupCreateRequest, ctx *gin.Context) (*dtos.GroupResponse, *models.ErrorResponse) {
 	if group, err := uc.groupRepo.GetGroupByName(group.Name, ctx); err == nil && group != nil {
 		return nil, models.BadRequest("Group with the given name already exists")
 	}
 	return uc.groupRepo.CreateGroup(group, ctx)
 }
 
-func (uc *groupUseCase) UpdateGroup(id string, group dtos.GroupUpdateRequest, ctx context.Context) (*dtos.GroupResponse, *models.ErrorResponse) {
+func (uc *groupUseCase) UpdateGroup(id string, group dtos.GroupUpdateRequest, ctx *gin.Context) (*dtos.GroupResponse, *models.ErrorResponse) {
 	if _, err := uc.checkGroupExists(id, ctx); err != nil {
 		return nil, err
 	}
 	return uc.groupRepo.UpdateGroup(id, group, ctx)
 }
 
-func (uc *groupUseCase) DeleteGroup(id string, ctx context.Context) *models.ErrorResponse {
+func (uc *groupUseCase) DeleteGroup(id string, ctx *gin.Context) *models.ErrorResponse {
 	if _, err := uc.checkGroupExists(id, ctx); err != nil {
 		return err
 	}

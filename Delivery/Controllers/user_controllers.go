@@ -49,9 +49,9 @@ func (uc *userController) GetUsers(c *gin.Context) {
 	var errResp *models.ErrorResponse
 
 	if !uc.isSearch(searchFields) {
-		users, errResp = uc.usecase.GetAllUsers(c.Request.Context())
+		users, errResp = uc.usecase.GetAllUsers(c)
 	} else {
-		users, errResp = uc.usecase.SearchUsers(searchFields, c.Request.Context())
+		users, errResp = uc.usecase.SearchUsers(searchFields, c)
 	}
 
 	if errResp != nil {

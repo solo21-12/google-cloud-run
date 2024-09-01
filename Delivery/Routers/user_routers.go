@@ -7,13 +7,13 @@ import (
 	repository "github.com/google-run-code/Repository"
 	usecases "github.com/google-run-code/Usecases"
 	"github.com/google-run-code/config"
-	"gorm.io/gorm"
 )
 
-func NewUserRouter(db *gorm.DB, env config.Env, router *gin.Engine) {
-	userRepo := repository.NewUserRepository(db)
-	roleRepo := repository.NewRoleRepository(db)
-	groupRepo := repository.NewGroupRepository(db)
+func NewUserRouter(env config.Env, router *gin.RouterGroup) {
+
+	userRepo := repository.NewUserRepository()
+	roleRepo := repository.NewRoleRepository()
+	groupRepo := repository.NewGroupRepository()
 	emailService := infrastructure.NewEmailService(env)
 
 	userUseCase := usecases.NewUserUseCase(userRepo, emailService, roleRepo, groupRepo)

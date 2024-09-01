@@ -20,7 +20,7 @@ func NewRoleController(roleUsecase interfaces.RoleUseCase) interfaces.RoleContro
 }
 
 func (rc *roleController) GetAllRoles(c *gin.Context) {
-	roles, errResp := rc.roleUsecase.GetAllRoles(c.Request.Context())
+	roles, errResp := rc.roleUsecase.GetAllRoles(c)
 
 	if errResp != nil {
 		c.IndentedJSON(errResp.Code, gin.H{"error": errResp.Message})
@@ -32,7 +32,7 @@ func (rc *roleController) GetAllRoles(c *gin.Context) {
 
 func (rc *roleController) GetRoleById(c *gin.Context) {
 	id := c.Param("id")
-	role, errResp := rc.roleUsecase.GetRoleById(id, c.Request.Context())
+	role, errResp := rc.roleUsecase.GetRoleById(id, c)
 
 	if errResp != nil {
 		c.IndentedJSON(errResp.Code, gin.H{"error": errResp.Message})
@@ -52,7 +52,7 @@ func (rc *roleController) CreateRole(c *gin.Context) {
 
 	log.Println(role, "role")
 
-	createdRole, errResp := rc.roleUsecase.CreateRole(role, c.Request.Context())
+	createdRole, errResp := rc.roleUsecase.CreateRole(role, c)
 
 	if errResp != nil {
 		c.IndentedJSON(errResp.Code, gin.H{"error": errResp.Message})
@@ -72,7 +72,7 @@ func (rc *roleController) UpdateRole(c *gin.Context) {
 		return
 	}
 
-	updatedRole, errResp := rc.roleUsecase.UpdateRole(id, role, c.Request.Context())
+	updatedRole, errResp := rc.roleUsecase.UpdateRole(id, role, c)
 
 	if errResp != nil {
 		c.IndentedJSON(errResp.Code, gin.H{"error": errResp.Message})
@@ -85,7 +85,7 @@ func (rc *roleController) UpdateRole(c *gin.Context) {
 func (rc *roleController) DeleteRole(c *gin.Context) {
 	id := c.Param("id")
 
-	errResp := rc.roleUsecase.DeleteRole(id, c.Request.Context())
+	errResp := rc.roleUsecase.DeleteRole(id, c)
 
 	if errResp != nil {
 		c.IndentedJSON(errResp.Code, gin.H{"error": errResp.Message})
@@ -98,7 +98,7 @@ func (rc *roleController) DeleteRole(c *gin.Context) {
 func (rc *roleController) GetRoleUsers(c *gin.Context) {
 	id := c.Param("id")
 
-	users, errResp := rc.roleUsecase.GetRoleUsers(id, c.Request.Context())
+	users, errResp := rc.roleUsecase.GetRoleUsers(id, c)
 
 	if errResp != nil {
 		c.IndentedJSON(errResp.Code, gin.H{"error": errResp.Message})
