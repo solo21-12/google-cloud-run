@@ -9,7 +9,7 @@ import (
 func SetUp() {
 	env := config.NewEnv()
 	db := config.NewPostgresConfig(*env)
-	client := db.Client()
+	client := db.Client(env.DB_NAME)
 	db.Migrate(&models.User{}, &models.Group{}, &models.Role{})
 
 	router := gin.Default()

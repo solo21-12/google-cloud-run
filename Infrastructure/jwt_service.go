@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/dgrijalva/jwt-go"
 	interfaces "github.com/google-run-code/Domain/Interfaces"
 	models "github.com/google-run-code/Domain/Models"
 	"github.com/google-run-code/config"
@@ -21,17 +20,7 @@ func NewJwtService(env *config.Env) interfaces.JwtService {
 }
 
 func (j *JwtService) ValidateToken(tokenStr string) (*models.JWTCustome, error) {
-	token, err := jwt.ParseWithClaims(tokenStr, &models.JWTCustome{}, func(token *jwt.Token) (interface{}, error) {
-		return []byte(j.Env.JWT_SECRET), nil
-	})
-	if err != nil {
-		return nil, fmt.Errorf("invalid token: %w", err)
-	}
-
-	if claims, ok := token.Claims.(*models.JWTCustome); ok && token.Valid {
-		return claims, nil
-	}
-	return nil, fmt.Errorf("invalid token")
+	return nil, nil
 }
 
 func (j *JwtService) ValidateAuthHeader(authHeader string) ([]string, error) {

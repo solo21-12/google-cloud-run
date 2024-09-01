@@ -1,8 +1,11 @@
 module github.com/google-run-code
 
-go 1.23.0
+go 1.22
 
-require github.com/gin-gonic/gin v1.10.0
+require (
+	github.com/gin-gonic/gin v1.10.0
+	gorm.io/gorm v1.25.10
+)
 
 require (
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
@@ -27,7 +30,6 @@ require (
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9 // indirect
 	golang.org/x/sync v0.6.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
-	gorm.io/gorm v1.25.10 // indirect
 )
 
 require (
