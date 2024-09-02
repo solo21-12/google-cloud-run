@@ -48,18 +48,6 @@ func (mr *MockUserControllerMockRecorder) AddUserToGroup(c interface{}) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddUserToGroup", reflect.TypeOf((*MockUserController)(nil).AddUserToGroup), c)
 }
 
-// AddUserToRole mocks base method.
-func (m *MockUserController) AddUserToRole(c *gin.Context) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "AddUserToRole", c)
-}
-
-// AddUserToRole indicates an expected call of AddUserToRole.
-func (mr *MockUserControllerMockRecorder) AddUserToRole(c interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddUserToRole", reflect.TypeOf((*MockUserController)(nil).AddUserToRole), c)
-}
-
 // CreateUser mocks base method.
 func (m *MockUserController) CreateUser(c *gin.Context) {
 	m.ctrl.T.Helper()
@@ -82,6 +70,18 @@ func (m *MockUserController) DeleteUser(c *gin.Context) {
 func (mr *MockUserControllerMockRecorder) DeleteUser(c interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteUser", reflect.TypeOf((*MockUserController)(nil).DeleteUser), c)
+}
+
+// DeletetUserFromGroup mocks base method.
+func (m *MockUserController) DeletetUserFromGroup(c *gin.Context) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "DeletetUserFromGroup", c)
+}
+
+// DeletetUserFromGroup indicates an expected call of DeletetUserFromGroup.
+func (mr *MockUserControllerMockRecorder) DeletetUserFromGroup(c interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeletetUserFromGroup", reflect.TypeOf((*MockUserController)(nil).DeletetUserFromGroup), c)
 }
 
 // GetUserById mocks base method.
@@ -156,11 +156,12 @@ func (m *MockUserUseCase) EXPECT() *MockUserUseCaseMockRecorder {
 }
 
 // AddUserToGroup mocks base method.
-func (m *MockUserUseCase) AddUserToGroup(req dtos.AddUserToGroupRequest, ctx *gin.Context) *models.ErrorResponse {
+func (m *MockUserUseCase) AddUserToGroup(req dtos.AddUserToGroupRequest, ctx *gin.Context) (*models.ErrorResponse, string) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AddUserToGroup", req, ctx)
 	ret0, _ := ret[0].(*models.ErrorResponse)
-	return ret0
+	ret1, _ := ret[1].(string)
+	return ret0, ret1
 }
 
 // AddUserToGroup indicates an expected call of AddUserToGroup.
@@ -199,10 +200,10 @@ func (mr *MockUserUseCaseMockRecorder) CheckEmailExists(email, ctx interface{}) 
 }
 
 // CreateUser mocks base method.
-func (m *MockUserUseCase) CreateUser(user dtos.UserCreateRequest, ctx *gin.Context) (*dtos.UserResponse, *models.ErrorResponse) {
+func (m *MockUserUseCase) CreateUser(user dtos.UserCreateRequest, ctx *gin.Context) (*dtos.UserResponseSingle, *models.ErrorResponse) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateUser", user, ctx)
-	ret0, _ := ret[0].(*dtos.UserResponse)
+	ret0, _ := ret[0].(*dtos.UserResponseSingle)
 	ret1, _ := ret[1].(*models.ErrorResponse)
 	return ret0, ret1
 }
@@ -228,10 +229,10 @@ func (mr *MockUserUseCaseMockRecorder) DeleteUser(id, ctx interface{}) *gomock.C
 }
 
 // GetAllUsers mocks base method.
-func (m *MockUserUseCase) GetAllUsers(ctx *gin.Context) ([]*dtos.UserResponse, *models.ErrorResponse) {
+func (m *MockUserUseCase) GetAllUsers(ctx *gin.Context) ([]*dtos.UserResponseAll, *models.ErrorResponse) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAllUsers", ctx)
-	ret0, _ := ret[0].([]*dtos.UserResponse)
+	ret0, _ := ret[0].([]*dtos.UserResponseAll)
 	ret1, _ := ret[1].(*models.ErrorResponse)
 	return ret0, ret1
 }
@@ -272,11 +273,26 @@ func (mr *MockUserUseCaseMockRecorder) GetUsersGroup(id, ctx interface{}) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUsersGroup", reflect.TypeOf((*MockUserUseCase)(nil).GetUsersGroup), id, ctx)
 }
 
+// RemoveUserFromGroup mocks base method.
+func (m *MockUserUseCase) RemoveUserFromGroup(req dtos.RemoveUserFromGroupRequest, ctx *gin.Context) (string, *models.ErrorResponse) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RemoveUserFromGroup", req, ctx)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(*models.ErrorResponse)
+	return ret0, ret1
+}
+
+// RemoveUserFromGroup indicates an expected call of RemoveUserFromGroup.
+func (mr *MockUserUseCaseMockRecorder) RemoveUserFromGroup(req, ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveUserFromGroup", reflect.TypeOf((*MockUserUseCase)(nil).RemoveUserFromGroup), req, ctx)
+}
+
 // SearchUsers mocks base method.
-func (m *MockUserUseCase) SearchUsers(searchFields dtos.SearchFields, ctx *gin.Context) ([]*dtos.UserResponse, *models.ErrorResponse) {
+func (m *MockUserUseCase) SearchUsers(searchFields dtos.SearchFields, ctx *gin.Context) ([]*dtos.UserResponseAll, *models.ErrorResponse) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SearchUsers", searchFields, ctx)
-	ret0, _ := ret[0].([]*dtos.UserResponse)
+	ret0, _ := ret[0].([]*dtos.UserResponseAll)
 	ret1, _ := ret[1].(*models.ErrorResponse)
 	return ret0, ret1
 }
@@ -288,10 +304,10 @@ func (mr *MockUserUseCaseMockRecorder) SearchUsers(searchFields, ctx interface{}
 }
 
 // UpdateUser mocks base method.
-func (m *MockUserUseCase) UpdateUser(id string, user dtos.UserUpdateRequest, ctx *gin.Context) (*dtos.UserResponse, *models.ErrorResponse) {
+func (m *MockUserUseCase) UpdateUser(id string, user dtos.UserUpdateRequest, ctx *gin.Context) (*dtos.UserResponseSingle, *models.ErrorResponse) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateUser", id, user, ctx)
-	ret0, _ := ret[0].(*dtos.UserResponse)
+	ret0, _ := ret[0].(*dtos.UserResponseSingle)
 	ret1, _ := ret[1].(*models.ErrorResponse)
 	return ret0, ret1
 }
@@ -397,10 +413,10 @@ func (mr *MockUserRepositoryMockRecorder) DeleteUser(id, ctx interface{}) *gomoc
 }
 
 // GetAllUsers mocks base method.
-func (m *MockUserRepository) GetAllUsers(ctx *gin.Context) ([]*dtos.UserResponse, *models.ErrorResponse) {
+func (m *MockUserRepository) GetAllUsers(ctx *gin.Context) ([]*dtos.UserResponseAll, *models.ErrorResponse) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAllUsers", ctx)
-	ret0, _ := ret[0].([]*dtos.UserResponse)
+	ret0, _ := ret[0].([]*dtos.UserResponseAll)
 	ret1, _ := ret[1].(*models.ErrorResponse)
 	return ret0, ret1
 }
@@ -456,11 +472,25 @@ func (mr *MockUserRepositoryMockRecorder) GetUsersGroups(uid, ctx interface{}) *
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUsersGroups", reflect.TypeOf((*MockUserRepository)(nil).GetUsersGroups), uid, ctx)
 }
 
+// RemoveUserFromGroups mocks base method.
+func (m *MockUserRepository) RemoveUserFromGroups(userUID string, groupUIDs []string, ctx *gin.Context) *models.ErrorResponse {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RemoveUserFromGroups", userUID, groupUIDs, ctx)
+	ret0, _ := ret[0].(*models.ErrorResponse)
+	return ret0
+}
+
+// RemoveUserFromGroups indicates an expected call of RemoveUserFromGroups.
+func (mr *MockUserRepositoryMockRecorder) RemoveUserFromGroups(userUID, groupUIDs, ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveUserFromGroups", reflect.TypeOf((*MockUserRepository)(nil).RemoveUserFromGroups), userUID, groupUIDs, ctx)
+}
+
 // SearchUsers mocks base method.
-func (m *MockUserRepository) SearchUsers(searchFields dtos.SearchFields, ctx *gin.Context) ([]*dtos.UserResponse, *models.ErrorResponse) {
+func (m *MockUserRepository) SearchUsers(searchFields dtos.SearchFields, ctx *gin.Context) ([]*dtos.UserResponseAll, *models.ErrorResponse) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SearchUsers", searchFields, ctx)
-	ret0, _ := ret[0].([]*dtos.UserResponse)
+	ret0, _ := ret[0].([]*dtos.UserResponseAll)
 	ret1, _ := ret[1].(*models.ErrorResponse)
 	return ret0, ret1
 }
@@ -472,10 +502,10 @@ func (mr *MockUserRepositoryMockRecorder) SearchUsers(searchFields, ctx interfac
 }
 
 // UpdateUser mocks base method.
-func (m *MockUserRepository) UpdateUser(id string, user *dtos.UserUpdateRequest, ctx *gin.Context) (*dtos.UserResponse, *models.ErrorResponse) {
+func (m *MockUserRepository) UpdateUser(id string, user *dtos.UserUpdateRequest, ctx *gin.Context) (*dtos.UserResponseSingle, *models.ErrorResponse) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateUser", id, user, ctx)
-	ret0, _ := ret[0].(*dtos.UserResponse)
+	ret0, _ := ret[0].(*dtos.UserResponseSingle)
 	ret1, _ := ret[1].(*models.ErrorResponse)
 	return ret0, ret1
 }

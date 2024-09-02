@@ -215,14 +215,16 @@ func (r *userRepository) CreateUser(user dtos.UserCreateRequest, ctx *gin.Contex
 		return nil, models.InternalServerError(err.Error())
 	}
 
-	roles := dtos.AddUserToRoleRequest{
-		UserUID: newUser.UID.String(),
-		RoleId:  user.RoleId,
-	}
-	if err := r.AddUserToRole(roles, ctx); err != nil {
-		return nil, err
-	}
+	if user.RoleId != "" {
+		roles := dtos.AddUserToRoleRequest{
+			UserUID: newUser.UID.String(),
+			RoleId:  user.RoleId,
+		}
+		if err := r.AddUserToRole(roles, ctx); err != nil {
+			return nil, err
+		}
 
+	}
 	return &dtos.UserResponse{
 		UID:    newUser.UID.String(),
 		Name:   newUser.Name,
