@@ -17,6 +17,7 @@ type Env struct {
 func NewEnv() *Env {
 	viper.AutomaticEnv()
 	env := &Env{}
+
 	viper.BindEnv("DB_USER")
 	viper.BindEnv("DB_PASS")
 	viper.BindEnv("DB_HOST")
