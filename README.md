@@ -26,6 +26,7 @@ This project is a Golang-based REST API designed to manage users, groups, and ro
 - `POST /users`: Create a new user.
 - `PUT /users/{uid}`: Update user details.
 - `DELETE /users/{uid}`: Delete a user.
+- `Patch  /users/{uid}/groups`: Add user to groups
 
 ### Groups
 - `GET /groups`: Retrieve all groups.
@@ -69,14 +70,14 @@ This project is a Golang-based REST API designed to manage users, groups, and ro
 
 ## Local Setup
 
-To run this project locally, you need to set up the following environment variables:
+To run this project locally, you need to set up the following environment variables in the docker-compose file:
 
 ```plaintext
 JWT_SECRET="your-jwt-secret"
 DB_USER="your-db-user"
 DB_PASS="your-db-password"
 DB_HOST="localhost"
-DB_PORT=5433
+DB_PORT=5432
 ```
 
 ### Running the Application
@@ -84,22 +85,26 @@ DB_PORT=5433
 - **Using Docker**:  
   Build and run the Docker container:
   ```bash
-  make run_docker
-  ```
-
-- **Running Locally**:  
-  Simply run the application using:
-  ```bash
   make run
   ```
 
-**Note**: Make sure to update the `Makefile` with your environment variable information.
+**Note**: Make sure to update the `Docker-compose` with your environment variable information.
 
 ### Running Tests
 
 To execute the tests, run:
 ```bash
 make test
+```
+
+### To stop the server
+```bash
+make down
+```
+
+### To see logs
+```bash
+make logs
 ```
 
 ## API Documentation
