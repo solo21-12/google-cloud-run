@@ -3,6 +3,6 @@ test:
 down:
 	docker compose down 
 up:
-	docker compose up -d
+	docker compose up -d --build
 logs:
 	docker compose logs -f
