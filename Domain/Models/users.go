@@ -8,7 +8,7 @@ type User struct {
 	Name   string     `json:"name"`
 	Email  string     `gorm:"unique" json:"email"`
 	Status int        `json:"status"`
-	Groups []*Group   `gorm:"many2many:Groups_Users_Map;" json:"groups"`
+	Groups []*Group   `gorm:"many2many:Groups_Users_Maps;" json:"groups"`
 	RoleID *int       `gorm:"index;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;" json:"role_id"`
 	Role   *Role      `gorm:"foreignKey:RoleID;references:ID" json:"role,omitempty"`
 }

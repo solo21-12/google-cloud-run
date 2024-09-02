@@ -19,6 +19,6 @@ func NewRoleRouter(env config.Env, router *gin.RouterGroup) {
 	router.GET("/roles/:id", roleHandler.GetRoleById)
 	router.GET("/roles/:id/users", roleHandler.GetRoleUsers)
 	router.POST("/roles", roleHandler.CreateRole)
-	router.PUT("/roles/:id", roleHandler.UpdateRole)
+	router.PATCH("/roles/:id", roleHandler.UpdateRole)
 	router.DELETE("/roles/:id", roleHandler.DeleteRole)
 }

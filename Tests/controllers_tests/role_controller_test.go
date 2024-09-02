@@ -53,7 +53,7 @@ func (suite *RoleControllerTestSuite) TestCreateRole_Success() {
 	}
 
 	roleResponse := dtos.RoleResponse{
-		RID:    "some-id",
+		UID:    "some-id",
 		Name:   "Admin",
 		Rights: json.RawMessage(`{"read": true, "write": true}`),
 	}
@@ -83,7 +83,7 @@ func (suite *RoleControllerTestSuite) TestCreateRole_Success() {
 	suite.NoError(err)
 
 	// Compare JSON responses ignoring formatting
-	suite.Equal(roleResponse.RID, responseBody.RID)
+	suite.Equal(roleResponse.UID, responseBody.UID)
 	suite.Equal(roleResponse.Name, responseBody.Name)
 	suite.JSONEq(string(roleResponse.Rights), string(responseBody.Rights))
 }

@@ -36,7 +36,7 @@ func (suite *GroupControllerTestSuite) SetupTest() {
 }
 
 func (suite *GroupControllerTestSuite) TestGetAllGroups_Success() {
-	expectedGroups := []*dtos.GroupResponse{{GID: "group-id", Name: "Admin"}}
+	expectedGroups := []*dtos.GroupResponse{{UID: "group-id", Name: "Admin"}}
 	suite.useCaseMock.EXPECT().GetAllGroups(gomock.Any()).Return(expectedGroups, nil)
 
 	req, _ := http.NewRequest("GET", "/groups", nil)
@@ -48,7 +48,7 @@ func (suite *GroupControllerTestSuite) TestGetAllGroups_Success() {
 }
 
 func (suite *GroupControllerTestSuite) TestGetGroupById_Success() {
-	expectedGroup := &dtos.GroupResponse{GID: "group-id", Name: "Admin"}
+	expectedGroup := &dtos.GroupResponse{UID: "group-id", Name: "Admin"}
 	suite.useCaseMock.EXPECT().GetGroupById("group-id", gomock.Any()).Return(expectedGroup, nil)
 
 	req, _ := http.NewRequest("GET", "/groups/group-id", nil)
@@ -73,7 +73,7 @@ func (suite *GroupControllerTestSuite) TestGetGroupUsers_Success() {
 
 func (suite *GroupControllerTestSuite) TestCreateGroup_Success() {
 	groupRequest := dtos.GroupCreateRequest{Name: "Admin"}
-	groupResponse := &dtos.GroupResponse{GID: "group-id", Name: "Admin"}
+	groupResponse := &dtos.GroupResponse{UID: "group-id", Name: "Admin"}
 	suite.useCaseMock.EXPECT().CreateGroup(groupRequest, gomock.Any()).Return(groupResponse, nil)
 
 	groupJson, _ := json.Marshal(groupRequest)
@@ -88,7 +88,7 @@ func (suite *GroupControllerTestSuite) TestCreateGroup_Success() {
 
 func (suite *GroupControllerTestSuite) TestUpdateGroup_Success() {
 	groupRequest := dtos.GroupUpdateRequest{Name: "Admin"}
-	groupResponse := &dtos.GroupResponse{GID: "group-id", Name: "Admin"}
+	groupResponse := &dtos.GroupResponse{UID: "group-id", Name: "Admin"}
 	suite.useCaseMock.EXPECT().UpdateGroup("group-id", groupRequest, gomock.Any()).Return(groupResponse, nil)
 
 	groupJson, _ := json.Marshal(groupRequest)

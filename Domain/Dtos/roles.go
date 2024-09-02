@@ -13,7 +13,13 @@ type RoleUpdateRequest struct {
 }
 
 type RoleResponse struct {
-	RID    string          `json:"rid"`
+	UID    string          `json:"UID"`
 	Name   string          `json:"name"`
 	Rights json.RawMessage `json:"rights"`
+}
+
+
+type RoleResponseNoRight struct {
+	UID    string          `json:"UID"`
+	Name   string          `json:"name"`
 }

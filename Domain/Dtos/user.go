@@ -4,22 +4,25 @@ type UserCreateRequest struct {
 	Name   string `json:"name"`
 	Email  string `json:"email"`
 	Status int    `json:"status"`
+	RoleId string `json:"role_id"`
 }
 
 type UserUpdateRequest struct {
-	Name   string `json:"name"`
-	Email  string `json:"email"`
-	Status int    `json:"status"`
+	Name    string `json:"name"`
+	Email   string `json:"email"`
+	Status  int    `json:"status"`
+	RoleId  string `json:"role_id"`
+	UserUID string `json:"UserUID"`
 }
 
 type AddUserToGroupRequest struct {
-	UserId  string `json:"user_id"`
-	GroupId string `json:"group_id"`
+	UserUID  string   `json:"UserUID"`
+	GroupIds []string `json:"group_ids"`
 }
 
 type AddUserToRoleRequest struct {
-	UserId string `json:"user_id"`
-	RoleId string `json:"role_id"`
+	UserUID string `json:"UserUID"`
+	RoleId  string `json:"role_id"`
 }
 
 type UserResponse struct {
@@ -35,12 +38,25 @@ type UserResponseSingle struct {
 	Email  string          `json:"email"`
 	Status int             `json:"status"`
 	Groups []GroupResponse `json:"groups"`
-	Role  *RoleResponse  `json:"roles"`
+	Role   *RoleResponse   `json:"roles"`
+}
+
+type UserResponseAll struct {
+	UID    string               `json:"uid"`
+	Name   string               `json:"name"`
+	Email  string               `json:"email"`
+	Status int                  `json:"status"`
+	Groups []GroupResponse      `json:"groups"`
+	Role   *RoleResponseNoRight `json:"roles"`
 }
 
 type SearchFields struct {
-	Name  string `json:"Name"`
+	Name    string `json:"Name"`
 	Limit   int    `json:"limit"`
 	OrderBy string `json:"orderBy"`
 }
 
+type RemoveUserFromGroupRequest struct {
+	UserUID  string   `json:"UserUID"`
+	GroupIds []string `json:"group_ids"`
+}

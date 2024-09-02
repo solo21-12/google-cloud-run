@@ -18,7 +18,7 @@ func NewGroupRouter(env config.Env, router *gin.RouterGroup) {
 	router.GET("/groups/:id", groupHandler.GetGroupById)
 	router.GET("/groups/:id/users", groupHandler.GetGroupUsers)
 	router.POST("/groups", groupHandler.CreateGroup)
-	router.PUT("/groups/:id", groupHandler.UpdateGroup)
+	router.PATCH("/groups/:id", groupHandler.UpdateGroup)
 	router.DELETE("/groups/:id", groupHandler.DeleteGroup)
 
 }

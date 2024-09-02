@@ -24,10 +24,10 @@ func NewUserRouter(env config.Env, router *gin.RouterGroup) {
 	router.GET("/users/:id/groups", userHandler.GetUsersGroup)
 
 	router.POST("/users", userHandler.CreateUser)
-	router.PUT("/users/:id", userHandler.UpdateUser)
+	router.PATCH("/users/:id", userHandler.UpdateUser)
 	router.DELETE("/users/:id", userHandler.DeleteUser)
 
-	router.PUT("/users/:id/groups", userHandler.AddUserToGroup)
-	router.PUT("/users/:id/roles", userHandler.AddUserToRole)
+	router.POST("/users/:id/groups", userHandler.AddUserToGroup)
+	router.DELETE("/users/:id/groups", userHandler.DeletetUserFromGroup)
 
 }

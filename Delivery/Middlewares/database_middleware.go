@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	interfaces "github.com/google-run-code/Domain/Interfaces"
+	models "github.com/google-run-code/Domain/Models"
 	"github.com/google-run-code/config"
 )
 
@@ -41,6 +42,13 @@ func DatabaseMiddleware(env *config.Env, jwtService interfaces.JwtService) gin.H
 
 		db := config.NewPostgresConfig(*env)
 		client := db.Client(dbName)
+		if client == nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Database connection failed"})
+			c.Abort()
+			return
+		}
+
+		db.Migrate(dbName, models.User{}, models.Role{}, models.Group{})
 
 		c.Set("dbClient", client)
 		c.Next()

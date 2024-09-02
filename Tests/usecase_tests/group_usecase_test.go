@@ -37,7 +37,7 @@ func (suite *GroupUsecaseTestSuite) TestCreateGroup_Success() {
 		Name: "Test Group",
 	}
 	group := &dtos.GroupResponse{
-		GID:  uuid.New().String(),
+		UID:  uuid.New().String(),
 		Name: groupReq.Name,
 	}
 
@@ -58,7 +58,7 @@ func (suite *GroupUsecaseTestSuite) TestGetGroupById_Success() {
 	ctx := &gin.Context{}
 	groupID := "some-group-id"
 	expectedGroup := &dtos.GroupResponse{
-		GID:  groupID,
+		UID:  groupID,
 		Name: "Test Group",
 	}
 
@@ -92,7 +92,7 @@ func (suite *GroupUsecaseTestSuite) TestGetGroupUsers_Success() {
 
 	suite.groupRepoMock.EXPECT().
 		GetGroupById(groupID, ctx).
-		Return(&dtos.GroupResponse{GID: groupID, Name: "Test Group"}, nil)
+		Return(&dtos.GroupResponse{UID: groupID, Name: "Test Group"}, nil)
 
 	suite.groupRepoMock.EXPECT().
 		GetGroupUsers(groupID, ctx).
@@ -111,13 +111,13 @@ func (suite *GroupUsecaseTestSuite) TestUpdateGroup_Success() {
 		Name: "Updated Group",
 	}
 	updatedGroup := &dtos.GroupResponse{
-		GID:  groupID,
+		UID:  groupID,
 		Name: groupReq.Name,
 	}
 
 	suite.groupRepoMock.EXPECT().
 		GetGroupById(groupID, ctx).
-		Return(&dtos.GroupResponse{GID: groupID, Name: "Old Group"}, nil)
+		Return(&dtos.GroupResponse{UID: groupID, Name: "Old Group"}, nil)
 
 	suite.groupRepoMock.EXPECT().
 		UpdateGroup(groupID, groupReq, ctx).
@@ -135,7 +135,7 @@ func (suite *GroupUsecaseTestSuite) TestDeleteGroup_Success() {
 
 	suite.groupRepoMock.EXPECT().
 		GetGroupById(groupID, ctx).
-		Return(&dtos.GroupResponse{GID: groupID, Name: "Test Group"}, nil)
+		Return(&dtos.GroupResponse{UID: groupID, Name: "Test Group"}, nil)
 
 	suite.groupRepoMock.EXPECT().
 		DeleteGroup(groupID, ctx).

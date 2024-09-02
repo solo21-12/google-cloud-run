@@ -26,7 +26,7 @@ func (uc *userController) isSearch(srarchField dtos.SearchFields) bool {
 
 func (uc *userController) GetUsers(c *gin.Context) {
 	searchFields := dtos.SearchFields{
-		Name:  c.Query("name"),
+		Name:    c.Query("name"),
 		Limit:   10,
 		OrderBy: c.Query("orderby"),
 	}
@@ -45,7 +45,7 @@ func (uc *userController) GetUsers(c *gin.Context) {
 		}
 	}
 
-	var users []*dtos.UserResponse
+	var users []*dtos.UserResponseAll
 	var errResp *models.ErrorResponse
 
 	if !uc.isSearch(searchFields) {
@@ -93,6 +93,7 @@ func (uc *userController) handleCreateOrUpdateUser(c *gin.Context, isUpdate bool
 
 	if isUpdate {
 		userRequest = &dtos.UserUpdateRequest{}
+		userRequest.(*dtos.UserUpdateRequest).UserUID = id
 	} else {
 		userRequest = &dtos.UserCreateRequest{}
 	}
@@ -152,15 +153,15 @@ func (uc *userController) AddUserToGroup(c *gin.Context) {
 	}
 
 	id := c.Param("id")
-	req.UserId = id
-	err := uc.usecase.AddUserToGroup(req, c)
+	req.UserUID = id
+	err, msg := uc.usecase.AddUserToGroup(req, c)
 
 	if err != nil {
 		c.IndentedJSON(err.Code, gin.H{"error": err.Message})
 		return
 	}
 
-	c.IndentedJSON(http.StatusOK, gin.H{"message": "User added to group"})
+	c.IndentedJSON(http.StatusOK, gin.H{"message": msg})
 }
 
 func (uc *userController) AddUserToRole(c *gin.Context) {
@@ -171,7 +172,7 @@ func (uc *userController) AddUserToRole(c *gin.Context) {
 	}
 
 	id := c.Param("id")
-	req.UserId = id
+	req.UserUID = id
 
 	err := uc.usecase.AddUserToRole(req, c)
 
@@ -182,3 +183,26 @@ func (uc *userController) AddUserToRole(c *gin.Context) {
 
 	c.IndentedJSON(http.StatusOK, gin.H{"message": "User added to role"})
 }
+
+func (uc *userController) DeletetUserFromGroup(c *gin.Context) {
+	var req dtos.RemoveUserFromGroupRequest
+
+	id := c.Param("id")
+
+	if err := c.ShouldBind(&req); err != nil {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	req.UserUID = id
+
+	msg, nErr := uc.usecase.RemoveUserFromGroup(req, c)
+
+	if nErr != nil {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": nErr.Error()})
+		return
+	}
+
+	c.IndentedJSON(http.StatusOK, gin.H{"Message": msg})
+}
+

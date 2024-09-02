@@ -17,7 +17,6 @@ func NewUserRepository() interfaces.UserRepository {
 }
 
 func (r *userRepository) getDB(ctx *gin.Context) (*gorm.DB, error) {
-
 	db, exists := ctx.Get("dbClient")
 	if !exists {
 		return nil, models.InternalServerError("Database connection not found")
@@ -31,7 +30,7 @@ func (r *userRepository) getDB(ctx *gin.Context) (*gorm.DB, error) {
 	return dbClient, nil
 }
 
-func (r *userRepository) GetAllUsers(ctx *gin.Context) ([]*dtos.UserResponse, *models.ErrorResponse) {
+func (r *userRepository) GetAllUsers(ctx *gin.Context) ([]*dtos.UserResponseAll, *models.ErrorResponse) {
 	db, err := r.getDB(ctx)
 
 	if err != nil {
@@ -40,18 +39,22 @@ func (r *userRepository) GetAllUsers(ctx *gin.Context) ([]*dtos.UserResponse, *m
 	var users []*models.User
 	if err := db.WithContext(ctx).Preload("Groups").Preload("Role").Find(&users).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return []*dtos.UserResponse{}, nil
+			return []*dtos.UserResponseAll{}, nil
 		}
 		return nil, models.InternalServerError(err.Error())
 	}
 
-	var result []*dtos.UserResponse
+	var result []*dtos.UserResponseAll
 	for _, user := range users {
-		result = append(result, &dtos.UserResponse{
+		result = append(result, &dtos.UserResponseAll{
 			UID:    user.UID.String(),
 			Name:   user.Name,
 			Email:  user.Email,
 			Status: user.Status,
+			Role: &dtos.RoleResponseNoRight{
+				UID:  user.Role.UID.String(),
+				Name: user.Role.Name,
+			},
 		})
 	}
 	return result, nil
@@ -79,7 +82,7 @@ func (r *userRepository) GetUserById(uid string, ctx *gin.Context) (*dtos.UserRe
 	var roleRes *dtos.RoleResponse
 	if user.Role != nil {
 		roleRes = &dtos.RoleResponse{
-			RID:    user.Role.RID.String(),
+			UID:    user.Role.UID.String(),
 			Name:   user.Role.Name,
 			Rights: user.Role.Rights,
 		}
@@ -94,7 +97,7 @@ func (r *userRepository) GetUserById(uid string, ctx *gin.Context) (*dtos.UserRe
 
 	for _, group := range user.Groups {
 		result.Groups = append(result.Groups, dtos.GroupResponse{
-			GID:  group.GID.String(),
+			UID:  group.UID.String(),
 			Name: group.Name,
 		})
 	}
@@ -141,7 +144,7 @@ func (r *userRepository) GetUsersGroups(uid string, ctx *gin.Context) ([]*dtos.G
 	var groups []*dtos.GroupResponse
 	for _, group := range user.Groups {
 		groups = append(groups, &dtos.GroupResponse{
-			GID:  group.GID.String(),
+			UID:  group.UID.String(),
 			Name: group.Name,
 		})
 	}
@@ -149,7 +152,7 @@ func (r *userRepository) GetUsersGroups(uid string, ctx *gin.Context) ([]*dtos.G
 	return groups, nil
 }
 
-func (repo *userRepository) SearchUsers(searchFields dtos.SearchFields, ctx *gin.Context) ([]*dtos.UserResponse, *models.ErrorResponse) {
+func (repo *userRepository) SearchUsers(searchFields dtos.SearchFields, ctx *gin.Context) ([]*dtos.UserResponseAll, *models.ErrorResponse) {
 	var users []*models.User
 	db, err := repo.getDB(ctx)
 
@@ -157,7 +160,7 @@ func (repo *userRepository) SearchUsers(searchFields dtos.SearchFields, ctx *gin
 		return nil, models.InternalServerError(err.Error())
 	}
 
-	query := db.Where("name ILIKE ?", "%"+searchFields.Name+"%")
+	query := db.Preload("Role").Where("name ILIKE ?", "%"+searchFields.Name+"%")
 
 	if searchFields.OrderBy != "" {
 		query = query.Order(searchFields.OrderBy)
@@ -173,13 +176,22 @@ func (repo *userRepository) SearchUsers(searchFields dtos.SearchFields, ctx *gin
 		return nil, models.InternalServerError(err.Error())
 	}
 
-	var result []*dtos.UserResponse
+	var result []*dtos.UserResponseAll
 	for _, user := range users {
-		result = append(result, &dtos.UserResponse{
+		var roleResponse *dtos.RoleResponseNoRight
+		if user.Role != nil {
+			roleResponse = &dtos.RoleResponseNoRight{
+				UID:  user.Role.UID.String(),
+				Name: user.Role.Name,
+			}
+		}
+
+		result = append(result, &dtos.UserResponseAll{
 			UID:    user.UID.String(),
 			Name:   user.Name,
 			Email:  user.Email,
 			Status: user.Status,
+			Role:   roleResponse,
 		})
 	}
 
@@ -202,6 +214,15 @@ func (r *userRepository) CreateUser(user dtos.UserCreateRequest, ctx *gin.Contex
 	if err := db.WithContext(ctx).Create(&newUser).Error; err != nil {
 		return nil, models.InternalServerError(err.Error())
 	}
+
+	roles := dtos.AddUserToRoleRequest{
+		UserUID: newUser.UID.String(),
+		RoleId:  user.RoleId,
+	}
+	if err := r.AddUserToRole(roles, ctx); err != nil {
+		return nil, err
+	}
+
 	return &dtos.UserResponse{
 		UID:    newUser.UID.String(),
 		Name:   newUser.Name,
@@ -210,7 +231,7 @@ func (r *userRepository) CreateUser(user dtos.UserCreateRequest, ctx *gin.Contex
 	}, nil
 }
 
-func (r *userRepository) UpdateUser(uid string, user *dtos.UserUpdateRequest, ctx *gin.Context) (*dtos.UserResponse, *models.ErrorResponse) {
+func (r *userRepository) UpdateUser(uid string, user *dtos.UserUpdateRequest, ctx *gin.Context) (*dtos.UserResponseSingle, *models.ErrorResponse) {
 	var existingUser models.User
 	db, err := r.getDB(ctx)
 
@@ -224,6 +245,7 @@ func (r *userRepository) UpdateUser(uid string, user *dtos.UserUpdateRequest, ct
 
 	if err := db.WithContext(ctx).
 		Where("uid = ?", uId).
+		Preload("Role").
 		First(&existingUser).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, models.NotFound("User not found")
@@ -239,11 +261,16 @@ func (r *userRepository) UpdateUser(uid string, user *dtos.UserUpdateRequest, ct
 		return nil, models.InternalServerError("Failed to update user: " + err.Error())
 	}
 
-	return &dtos.UserResponse{
+	return &dtos.UserResponseSingle{
 		UID:    existingUser.UID.String(),
 		Name:   existingUser.Name,
 		Email:  existingUser.Email,
 		Status: existingUser.Status,
+		Role: &dtos.RoleResponse{
+			UID:    existingUser.Role.UID.String(),
+			Name:   existingUser.Role.Name,
+			Rights: existingUser.Role.Rights,
+		},
 	}, nil
 }
 
@@ -285,9 +312,10 @@ func (r *userRepository) AddUserToGroup(req dtos.AddUserToGroupRequest, ctx *gin
 	if err != nil {
 		return models.InternalServerError(err.Error())
 	}
+
 	var user models.User
 	if err := db.WithContext(ctx).
-		Where("uid = ?", req.UserId).
+		Where("uid = ?", req.UserUID).
 		First(&user).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return models.NotFound("User not found")
@@ -295,17 +323,17 @@ func (r *userRepository) AddUserToGroup(req dtos.AddUserToGroupRequest, ctx *gin
 		return models.InternalServerError(err.Error())
 	}
 
-	var group models.Group
+	var groups []models.Group
 	if err := db.WithContext(ctx).
-		Where("g_id = ?", req.GroupId).
-		First(&group).Error; err != nil {
+		Where("uid IN ?", req.GroupIds).
+		Find(&groups).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return models.NotFound("Group not found")
+			return models.NotFound("One or more groups not found")
 		}
 		return models.InternalServerError(err.Error())
 	}
 
-	if err := db.WithContext(ctx).Model(&user).Association("Groups").Append(&group); err != nil {
+	if err := db.WithContext(ctx).Model(&user).Association("Groups").Append(groups); err != nil {
 		return models.InternalServerError(err.Error())
 	}
 
@@ -323,7 +351,7 @@ func (repo *userRepository) AddUserToRole(req dtos.AddUserToRoleRequest, ctx *gi
 	}
 
 	if err := db.WithContext(ctx).
-		Where("r_id = ?", req.RoleId).
+		Where("uid = ?", req.RoleId).
 		First(&role).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return &models.ErrorResponse{Message: "Role not found", Code: 404}
@@ -332,7 +360,7 @@ func (repo *userRepository) AddUserToRole(req dtos.AddUserToRoleRequest, ctx *gi
 	}
 
 	if err := db.WithContext(ctx).
-		Where("uid = ?", req.UserId).
+		Where("uid = ?", req.UserUID).
 		First(&user).Error; err != nil {
 		return &models.ErrorResponse{Message: "User not found", Code: 404}
 	}
@@ -344,6 +372,35 @@ func (repo *userRepository) AddUserToRole(req dtos.AddUserToRoleRequest, ctx *gi
 	user.RoleID = &role.ID
 	if err := db.WithContext(ctx).Save(&user).Error; err != nil {
 		return &models.ErrorResponse{Message: "Failed to update user role: " + err.Error(), Code: 500}
+	}
+
+	return nil
+}
+
+func (repo *userRepository) RemoveUserFromGroups(userUID string, groupUIDs []string, ctx *gin.Context) *models.ErrorResponse {
+	db, err := repo.getDB(ctx)
+	if err != nil {
+		return models.InternalServerError(err.Error())
+	}
+
+	var user models.User
+	if err := db.WithContext(ctx).Where("uid = ?", userUID).First(&user).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return models.NotFound("User not found")
+		}
+		return models.InternalServerError(err.Error())
+	}
+
+	var groups []models.Group
+	if err := db.WithContext(ctx).Where("uid IN ?", groupUIDs).Find(&groups).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return models.NotFound("Some of the groups were not found")
+		}
+		return models.InternalServerError(err.Error())
+	}
+
+	if err := db.WithContext(ctx).Model(&user).Association("Groups").Delete(&groups); err != nil {
+		return models.InternalServerError(err.Error())
 	}
 
 	return nil
