@@ -60,7 +60,7 @@ func (j *JwtService) ValidateAuthHeader(authHeader string) ([]string, error) {
 }
 
 func (j *JwtService) GenerateToken(database string) (string, error) {
-	expiresIn := 5 * time.Hour
+	expiresIn := 24 * time.Hour
 
 	claims := &models.JWTCustome{
 		Expires:  time.Now().Add(expiresIn).Unix(),
