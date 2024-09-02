@@ -1,0 +1,36 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres
+    container_name: postgres
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  gcr-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: solo1221/gcr-api:v0.4
+    container_name: gcr-api
+    ports:
+      - "8081:8081"
+    depends_on:
+      - postgres
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: myuser
+      DB_PASS: mypassword
+      JWT_SECRET: a79d500a2faeaef062cafa91495cca25369c9a46d72e8300dd6f6c37f9de0ac8
+
+volumes:
+  postgres_data:
+networks:
+  mynetwork:
+    driver: bridge

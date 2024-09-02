@@ -179,7 +179,7 @@ func (uc *userUseCase) AddUserToGroup(req dtos.AddUserToGroupRequest, ctx *gin.C
 			return addErr, ""
 		}
 
-		successMessage += "User has been added to the following groups: " + strings.Join(newGroups, ", ")
+		successMessage += "User has been added to the given groups: "
 	}
 
 	// Create a success message that includes both new and existing group info
