@@ -51,15 +51,23 @@ func (uc *userController) GetUsers(c *gin.Context) {
 
 	if !uc.isSearch(searchFields) {
 		users, errResp = uc.usecase.GetAllUsers(c)
-	} else {
-		users, errResp = uc.usecase.SearchUsers(searchFields, c)
+		if users == nil {
+		} else {
+			users, errResp = uc.usecase.SearchUsers(searchFields, c)
+		}
+
+		if errResp != nil {
+			c.IndentedJSON(errResp.Code, gin.H{"error": errResp.Message})
+			return
+		}
+
 	}
 
-	if errResp != nil {
-		c.IndentedJSON(errResp.Code, gin.H{"error": errResp.Message})
+	if len(users) == 0 {
+		c.IndentedJSON(http.StatusNotFound, []string{})
+
 		return
 	}
-
 	c.IndentedJSON(http.StatusOK, users)
 }
 
@@ -143,7 +151,7 @@ func (uc *userController) DeleteUser(c *gin.Context) {
 		return
 	}
 
-	c.IndentedJSON(http.StatusNoContent, nil)
+	c.IndentedJSON(http.StatusOK, gin.H{"message": "User deleted successfully"})
 }
 
 func (uc *userController) AddUserToGroup(c *gin.Context) {

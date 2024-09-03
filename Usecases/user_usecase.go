@@ -100,37 +100,43 @@ func (uc *userUseCase) UpdateUser(id string, user dtos.UserUpdateRequest, ctx *g
 		return nil, models.NotFound("User not found")
 	}
 
-	if user.Name != "" {
-		userToUpdate.Name = user.Name
+	if user.Name != nil {
+		userToUpdate.Name = *user.Name
 	}
 
-	if user.Email != "" {
-		if err := uc.ValidateEmail(user.Email); err != nil {
+	if user.Email != nil {
+		if err := uc.ValidateEmail(*user.Email); err != nil {
 			return nil, err
 		}
-		userToUpdate.Email = user.Email
+		userToUpdate.Email = *user.Email
 	}
 
-	if user.Status != 0 {
-		userToUpdate.Status = user.Status
+	if user.Status != nil {
+		userToUpdate.Status = *user.Status
 	}
 
-	if user.RoleId != "" {
+	if user.RoleId != nil {
 		err := uc.AddUserToRole(dtos.AddUserToRoleRequest{
 			UserUID: userToUpdate.UID,
-			RoleId:  user.RoleId,
+			RoleId:  *user.RoleId,
 		}, ctx)
 		if err != nil {
 			return nil, err
 		}
+	} else {
+		if err := uc.userRepo.RemoveUserRole(userToUpdate.UID, ctx); err != nil {
+			return nil, err
+		}
+
 	}
 
 	updateUs := &dtos.UserUpdateRequest{
-		Name:    userToUpdate.Name,
-		Email:   userToUpdate.Email,
-		Status:  userToUpdate.Status,
+		Name:    &userToUpdate.Name,
+		Email:   &userToUpdate.Email,
+		Status:  &userToUpdate.Status,
 		UserUID: userToUpdate.UID,
 	}
+
 	return uc.userRepo.UpdateUser(id, updateUs, ctx)
 }
 
@@ -144,13 +150,11 @@ func (uc *userUseCase) DeleteUser(id string, ctx *gin.Context) *models.ErrorResp
 }
 
 func (uc *userUseCase) AddUserToGroup(req dtos.AddUserToGroupRequest, ctx *gin.Context) (*models.ErrorResponse, string) {
-	// Check if the user exists
 	_, err := uc.userRepo.GetUserById(req.UserUID, ctx)
 	if err != nil {
 		return models.NotFound("User not found"), ""
 	}
 
-	// Check which groups exist and filter out non-existent ones
 	var validGroups []string
 	for _, groupId := range req.GroupIds {
 		_, err = uc.groupRepo.GetGroupById(groupId, ctx)
@@ -162,13 +166,11 @@ func (uc *userUseCase) AddUserToGroup(req dtos.AddUserToGroupRequest, ctx *gin.C
 		return models.NotFound("None of the specified groups were found"), ""
 	}
 
-	// Get the user's current groups
 	groups, tErr := uc.userRepo.GetUsersGroups(req.UserUID, ctx)
 	if tErr != nil {
 		return tErr, ""
 	}
 
-	// Filter out groups where the user is already a member
 	var newGroups []string
 	var existingGroups []string
 	for _, groupId := range validGroups {
@@ -185,7 +187,6 @@ func (uc *userUseCase) AddUserToGroup(req dtos.AddUserToGroupRequest, ctx *gin.C
 		}
 	}
 
-	// If there are new groups to add the user to
 	successMessage := ""
 	if len(newGroups) > 0 {
 		req.GroupIds = newGroups
@@ -197,7 +198,6 @@ func (uc *userUseCase) AddUserToGroup(req dtos.AddUserToGroupRequest, ctx *gin.C
 		successMessage += "User has been added to the given groups: "
 	}
 
-	// Create a success message that includes both new and existing group info
 	if len(existingGroups) > 0 {
 		successMessage += " The user was already a member of the following groups: " + strings.Join(existingGroups, ", ")
 	}

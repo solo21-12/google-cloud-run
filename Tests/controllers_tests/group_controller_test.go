@@ -108,7 +108,7 @@ func (suite *GroupControllerTestSuite) TestDeleteGroup_Success() {
 	w := httptest.NewRecorder()
 	suite.router.ServeHTTP(w, req)
 
-	suite.Equal(http.StatusNoContent, w.Code)
+	suite.Equal(http.StatusOK, w.Code)
 }
 
 func TestGroupControllerTestSuite(t *testing.T) {

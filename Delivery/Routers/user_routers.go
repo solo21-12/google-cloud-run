@@ -11,9 +11,9 @@ import (
 
 func NewUserRouter(env config.Env, router *gin.RouterGroup) {
 
-	userRepo := repository.NewUserRepository()
-	roleRepo := repository.NewRoleRepository()
-	groupRepo := repository.NewGroupRepository()
+	userRepo := repository.NewUserRepository(&env)
+	roleRepo := repository.NewRoleRepository(&env)
+	groupRepo := repository.NewGroupRepository(&env)
 	emailService := infrastructure.NewEmailService(env)
 
 	userUseCase := usecases.NewUserUseCase(userRepo, emailService, roleRepo, groupRepo)

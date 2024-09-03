@@ -10,7 +10,7 @@ import (
 
 func NewGroupRouter(env config.Env, router *gin.RouterGroup) {
 
-	groupRepo := repository.NewGroupRepository()
+	groupRepo := repository.NewGroupRepository(&env)
 	groupUseCase := usecases.NewGroupUseCase(groupRepo)
 	groupHandler := controllers.NewGroupController(groupUseCase)
 

@@ -8,11 +8,11 @@ type UserCreateRequest struct {
 }
 
 type UserUpdateRequest struct {
-	Name    string `json:"name"`
-	Email   string `json:"email"`
-	Status  int    `json:"status"`
-	RoleId  string `json:"role_id"`
-	UserUID string `json:"UserUID"`
+	Name    *string `json:"name,omitempty"`
+	Email   *string `json:"email,omitempty"`
+	Status  *int    `json:"status,omitempty"`
+	RoleId  *string `json:"role_id,omitempty"`
+	UserUID string  `json:"UserUID"`
 }
 
 type AddUserToGroupRequest struct {
@@ -38,7 +38,7 @@ type UserResponseSingle struct {
 	Email  string          `json:"email"`
 	Status int             `json:"status"`
 	Groups []GroupResponse `json:"groups"`
-	Role   *RoleResponse   `json:"roles"`
+	Role   *RoleResponse   `json:"role"`
 }
 
 type UserResponseAll struct {
@@ -46,8 +46,7 @@ type UserResponseAll struct {
 	Name   string               `json:"name"`
 	Email  string               `json:"email"`
 	Status int                  `json:"status"`
-	Groups []GroupResponse      `json:"groups"`
-	Role   *RoleResponseNoRight `json:"roles"`
+	Role   *RoleResponseNoRight `json:"role"`
 }
 
 type SearchFields struct {

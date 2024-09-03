@@ -102,7 +102,7 @@ func (suite *RoleControllerTestSuite) TestDeleteRole_Success() {
 	suite.NoError(err)
 	defer response.Body.Close()
 
-	suite.Equal(http.StatusNoContent, response.StatusCode)
+	suite.Equal(http.StatusOK, response.StatusCode)
 }
 
 func (suite *RoleControllerTestSuite) TestGetRoleUsers_Success() {

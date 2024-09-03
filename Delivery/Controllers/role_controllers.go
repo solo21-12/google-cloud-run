@@ -26,6 +26,12 @@ func (rc *roleController) GetAllRoles(c *gin.Context) {
 		return
 	}
 
+	if len(roles) == 0 {
+		c.IndentedJSON(http.StatusNotFound, []string{})
+
+		return
+	}
+
 	c.IndentedJSON(http.StatusOK, roles)
 }
 
@@ -88,7 +94,7 @@ func (rc *roleController) DeleteRole(c *gin.Context) {
 		return
 	}
 
-	c.IndentedJSON(http.StatusNoContent, gin.H{"message": "Role deleted successfully"})
+	c.IndentedJSON(http.StatusOK, gin.H{"message": "Role deleted successfully"})
 }
 
 func (rc *roleController) GetRoleUsers(c *gin.Context) {

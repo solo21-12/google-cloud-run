@@ -83,15 +83,17 @@ func (suite *UserControllerTestSuite) TestCreateUser_Success() {
 
 func (suite *UserControllerTestSuite) TestUpdateUser_Success() {
 	id := "some-id"
+	name := "updated user"
+	email := "updated@example.com"
 	input := dtos.UserUpdateRequest{
-		Name:  "Updated User",
-		Email: "updated@example.com",
+		Name:  &name,
+		Email: &email,
 	}
 
 	expectedUser := &dtos.UserResponseSingle{
 		UID:    "some-uid",
-		Name:   input.Name,
-		Email:  input.Email,
+		Name:   *input.Name,
+		Email:  *input.Email,
 		Status: 1,
 	}
 
@@ -135,7 +137,7 @@ func (suite *UserControllerTestSuite) TestDeleteUser_Success() {
 	suite.NoError(err)
 	defer response.Body.Close()
 
-	suite.Equal(http.StatusNoContent, response.StatusCode)
+	suite.Equal(http.StatusOK, response.StatusCode)
 }
 
 func TestUserControllerTestSuite(t *testing.T) {

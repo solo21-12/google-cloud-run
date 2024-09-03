@@ -26,6 +26,11 @@ func (gc *groupController) GetAllGroups(c *gin.Context) {
 		return
 	}
 
+	if len(groups) == 0 {
+		c.IndentedJSON(http.StatusNotFound, []string{})
+		return
+	}
+
 	c.IndentedJSON(http.StatusOK, groups)
 }
 
@@ -101,5 +106,5 @@ func (gc *groupController) DeleteGroup(c *gin.Context) {
 		return
 	}
 
-	c.IndentedJSON(http.StatusNoContent, gin.H{})
+	c.IndentedJSON(http.StatusOK, gin.H{})
 }

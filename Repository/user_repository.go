@@ -11,32 +11,30 @@ import (
 )
 
 type userRepository struct {
-	db config.PostgresConfig
+	db  *gorm.DB
+	env config.Env
 }
 
 func NewUserRepository(env *config.Env) interfaces.UserRepository {
+	dbConfig := config.NewPostgresConfig(*env)
+	db := dbConfig.Client("") // Initialize with a default or no database
+
 	return &userRepository{
-		db: *config.NewPostgresConfig(*env),
+		db:  db,
+		env: *env,
 	}
 }
 
 func (r *userRepository) getDB(ctx *gin.Context) (*gorm.DB, error) {
-	db, exists := ctx.Get("dbClient")
-	if !exists {
-		return nil, models.InternalServerError("Database connection not found")
-	}
-
-	dbClient, ok := db.(*gorm.DB)
-	if !ok {
-		return nil, models.InternalServerError("Invalid database connection")
-	}
-
-	return dbClient, nil
+	dbName := ctx.GetString("dbName")
+	// Assuming NewPostgresConfig supports changing databases dynamically
+	dbConfig := config.NewPostgresConfig(r.env)
+	db := dbConfig.Client(dbName)
+	return db, nil
 }
 
 func (r *userRepository) GetAllUsers(ctx *gin.Context) ([]*dtos.UserResponseAll, *models.ErrorResponse) {
 	db, err := r.getDB(ctx)
-	defer r.db.Close(ctx.GetString("dbName"))
 
 	if err != nil {
 		return nil, models.InternalServerError(err.Error())
@@ -74,7 +72,6 @@ func (r *userRepository) GetAllUsers(ctx *gin.Context) ([]*dtos.UserResponseAll,
 
 func (r *userRepository) GetUserById(uid string, ctx *gin.Context) (*dtos.UserResponseSingle, *models.ErrorResponse) {
 	db, err := r.getDB(ctx)
-	defer r.db.Close(ctx.GetString("dbName"))
 
 	if err != nil {
 		return nil, models.InternalServerError(err.Error())
@@ -120,7 +117,6 @@ func (r *userRepository) GetUserById(uid string, ctx *gin.Context) (*dtos.UserRe
 
 func (r *userRepository) GetUserByEmail(email string, ctx *gin.Context) (*models.User, *models.ErrorResponse) {
 	db, err := r.getDB(ctx)
-	defer r.db.Close(ctx.GetString("dbName"))
 
 	if err != nil {
 		return nil, models.InternalServerError(err.Error())
@@ -140,7 +136,6 @@ func (r *userRepository) GetUserByEmail(email string, ctx *gin.Context) (*models
 func (r *userRepository) GetUsersGroups(uid string, ctx *gin.Context) ([]*dtos.GroupResponse, *models.ErrorResponse) {
 	var user models.User
 	db, err := r.getDB(ctx)
-	defer r.db.Close(ctx.GetString("dbName"))
 
 	if err != nil {
 		return nil, models.InternalServerError(err.Error())
@@ -215,7 +210,6 @@ func (repo *userRepository) SearchUsers(searchFields dtos.SearchFields, ctx *gin
 
 func (r *userRepository) CreateUser(user dtos.UserCreateRequest, ctx *gin.Context) (*dtos.UserResponse, *models.ErrorResponse) {
 	db, err := r.getDB(ctx)
-	defer r.db.Close(ctx.GetString("dbName"))
 
 	if err != nil {
 		return nil, models.InternalServerError(err.Error())
@@ -242,7 +236,6 @@ func (r *userRepository) CreateUser(user dtos.UserCreateRequest, ctx *gin.Contex
 func (r *userRepository) UpdateUser(uid string, user *dtos.UserUpdateRequest, ctx *gin.Context) (*dtos.UserResponseSingle, *models.ErrorResponse) {
 	var existingUser models.User
 	db, err := r.getDB(ctx)
-	defer r.db.Close(ctx.GetString("dbName"))
 
 	if err != nil {
 		return nil, models.InternalServerError(err.Error())
@@ -262,31 +255,35 @@ func (r *userRepository) UpdateUser(uid string, user *dtos.UserUpdateRequest, ct
 		return nil, models.InternalServerError(err.Error())
 	}
 
-	existingUser.Name = user.Name
-	existingUser.Email = user.Email
-	existingUser.Status = user.Status
+	existingUser.Name = *user.Name
+	existingUser.Email = *user.Email
+	existingUser.Status = *user.Status
 
 	if err := db.WithContext(ctx).Save(&existingUser).Error; err != nil {
 		return nil, models.InternalServerError("Failed to update user: " + err.Error())
 	}
 
-	return &dtos.UserResponseSingle{
+	res := &dtos.UserResponseSingle{
 		UID:    existingUser.UID.String(),
 		Name:   existingUser.Name,
 		Email:  existingUser.Email,
 		Status: existingUser.Status,
-		Role: &dtos.RoleResponse{
+	}
+
+	if existingUser.Role != nil {
+		res.Role = &dtos.RoleResponse{
 			UID:    existingUser.Role.UID.String(),
 			Name:   existingUser.Role.Name,
 			Rights: existingUser.Role.Rights,
-		},
-	}, nil
+		}
+	}
+
+	return res, nil
 }
 
 func (r *userRepository) DeleteUser(uid string, ctx *gin.Context) *models.ErrorResponse {
 	var existingUser models.User
 	db, err := r.getDB(ctx)
-	defer r.db.Close(ctx.GetString("dbName"))
 
 	if err != nil {
 		return models.InternalServerError(err.Error())
@@ -318,7 +315,6 @@ func (r *userRepository) DeleteUser(uid string, ctx *gin.Context) *models.ErrorR
 
 func (r *userRepository) AddUserToGroup(req dtos.AddUserToGroupRequest, ctx *gin.Context) *models.ErrorResponse {
 	db, err := r.getDB(ctx)
-	defer r.db.Close(ctx.GetString("dbName"))
 
 	if err != nil {
 		return models.InternalServerError(err.Error())
@@ -391,7 +387,7 @@ func (repo *userRepository) AddUserToRole(req dtos.AddUserToRoleRequest, ctx *gi
 func (repo *userRepository) RemoveUserFromGroups(userUID string, groupUIDs []string, ctx *gin.Context) *models.ErrorResponse {
 	db, err := repo.getDB(ctx)
 	if err != nil {
-		return models.InternalServerError(err.Error())
+		return models.InternalServerError("something went wrong")
 	}
 
 	var user models.User
@@ -399,7 +395,7 @@ func (repo *userRepository) RemoveUserFromGroups(userUID string, groupUIDs []str
 		if err == gorm.ErrRecordNotFound {
 			return models.NotFound("User not found")
 		}
-		return models.InternalServerError(err.Error())
+		return models.InternalServerError("something went wrong")
 	}
 
 	var groups []models.Group
@@ -407,11 +403,27 @@ func (repo *userRepository) RemoveUserFromGroups(userUID string, groupUIDs []str
 		if err == gorm.ErrRecordNotFound {
 			return models.NotFound("Some of the groups were not found")
 		}
-		return models.InternalServerError(err.Error())
+		return models.InternalServerError("something went wrong")
 	}
 
 	if err := db.WithContext(ctx).Model(&user).Association("Groups").Delete(&groups); err != nil {
+		return models.InternalServerError("something went wrong")
+	}
+
+	return nil
+}
+
+func (r *userRepository) RemoveUserRole(userID string, ctx *gin.Context) *models.ErrorResponse {
+	db, err := r.getDB(ctx)
+
+	if err != nil {
 		return models.InternalServerError(err.Error())
+	}
+
+	if err := db.WithContext(ctx).Model(&models.User{}).
+		Where("uid = ?", userID).
+		Update("role_id", nil).Error; err != nil {
+		return models.InternalServerError("Failed to set user's role to NULL: " + err.Error())
 	}
 
 	return nil

@@ -11,36 +11,31 @@ import (
 	"github.com/google-run-code/config"
 )
 
-type GroupRepository struct {
-	db config.PostgresConfig
+type groupRepository struct {
+	db  *gorm.DB
+	env config.Env
 }
 
 func NewGroupRepository(env *config.Env) interfaces.GroupRepository {
-	return &GroupRepository{
-		db: *config.NewPostgresConfig(*env),
+	dbConfig := config.NewPostgresConfig(*env)
+	db := dbConfig.Client("") 
 
+	return &groupRepository{
+		db:  db,
+		env: *env,
 	}
 }
 
-func (r *GroupRepository) getDB(ctx *gin.Context) (*gorm.DB, error) {
-
-	db, exists := ctx.Get("dbClient")
-	if !exists {
-		return nil, models.InternalServerError("Database connection not found")
-	}
-
-	dbClient, ok := db.(*gorm.DB)
-	if !ok {
-		return nil, models.InternalServerError("Invalid database connection")
-	}
-
-	return dbClient, nil
+func (r *groupRepository) getDB(ctx *gin.Context) (*gorm.DB, error) {
+	dbName := ctx.GetString("dbName")
+	dbConfig := config.NewPostgresConfig(r.env)
+	db := dbConfig.Client(dbName)
+	return db, nil
 }
 
-func (r *GroupRepository) GetAllGroups(ctx *gin.Context) ([]*dtos.GroupResponse, *models.ErrorResponse) {
+func (r *groupRepository) GetAllGroups(ctx *gin.Context) ([]*dtos.GroupResponse, *models.ErrorResponse) {
 	var groups []*models.Group
 	db, err := r.getDB(ctx)
-	defer r.db.Close(ctx.GetString("dbName"))
 
 	if err != nil {
 		return nil, models.InternalServerError(err.Error())
@@ -65,10 +60,9 @@ func (r *GroupRepository) GetAllGroups(ctx *gin.Context) ([]*dtos.GroupResponse,
 	return result, nil
 }
 
-func (r *GroupRepository) GetGroupById(UID string, ctx *gin.Context) (*dtos.GroupResponse, *models.ErrorResponse) {
+func (r *groupRepository) GetGroupById(UID string, ctx *gin.Context) (*dtos.GroupResponse, *models.ErrorResponse) {
 	var group models.Group
 	db, err := r.getDB(ctx)
-	defer r.db.Close(ctx.GetString("dbName"))
 
 	if err != nil {
 		return nil, models.InternalServerError(err.Error())
@@ -90,10 +84,9 @@ func (r *GroupRepository) GetGroupById(UID string, ctx *gin.Context) (*dtos.Grou
 	return &result, nil
 }
 
-func (r *GroupRepository) GetGroupUsers(UID string, ctx *gin.Context) ([]dtos.UserResponse, *models.ErrorResponse) {
+func (r *groupRepository) GetGroupUsers(UID string, ctx *gin.Context) ([]dtos.UserResponse, *models.ErrorResponse) {
 	var group models.Group
 	db, err := r.getDB(ctx)
-	defer r.db.Close(ctx.GetString("dbName"))
 
 	if err != nil {
 		return nil, models.InternalServerError(err.Error())
@@ -123,10 +116,9 @@ func (r *GroupRepository) GetGroupUsers(UID string, ctx *gin.Context) ([]dtos.Us
 	return users, nil
 }
 
-func (r *GroupRepository) GetGroupByName(name string, ctx *gin.Context) (*dtos.GroupResponse, *models.ErrorResponse) {
+func (r *groupRepository) GetGroupByName(name string, ctx *gin.Context) (*dtos.GroupResponse, *models.ErrorResponse) {
 	var group models.Group
 	db, err := r.getDB(ctx)
-	defer r.db.Close(ctx.GetString("dbName"))
 
 	if err != nil {
 		return nil, models.InternalServerError(err.Error())
@@ -146,9 +138,8 @@ func (r *GroupRepository) GetGroupByName(name string, ctx *gin.Context) (*dtos.G
 	return &result, nil
 }
 
-func (r *GroupRepository) CreateGroup(group dtos.GroupCreateRequest, ctx *gin.Context) (*dtos.GroupResponse, *models.ErrorResponse) {
+func (r *groupRepository) CreateGroup(group dtos.GroupCreateRequest, ctx *gin.Context) (*dtos.GroupResponse, *models.ErrorResponse) {
 	db, err := r.getDB(ctx)
-	defer r.db.Close(ctx.GetString("dbName"))
 
 	if err != nil {
 		return nil, models.InternalServerError(err.Error())
@@ -167,10 +158,9 @@ func (r *GroupRepository) CreateGroup(group dtos.GroupCreateRequest, ctx *gin.Co
 	}, nil
 }
 
-func (r *GroupRepository) UpdateGroup(UID string, group dtos.GroupUpdateRequest, ctx *gin.Context) (*dtos.GroupResponse, *models.ErrorResponse) {
+func (r *groupRepository) UpdateGroup(UID string, group dtos.GroupUpdateRequest, ctx *gin.Context) (*dtos.GroupResponse, *models.ErrorResponse) {
 	var existingGroup models.Group
 	db, err := r.getDB(ctx)
-	defer r.db.Close(ctx.GetString("dbName"))
 
 	if err != nil {
 		return nil, models.InternalServerError(err.Error())
@@ -191,10 +181,9 @@ func (r *GroupRepository) UpdateGroup(UID string, group dtos.GroupUpdateRequest,
 
 	return &dtos.GroupResponse{UID: existingGroup.UID.String(), Name: existingGroup.Name}, nil
 }
-func (r *GroupRepository) DeleteGroup(id string, ctx *gin.Context) *models.ErrorResponse {
+func (r *groupRepository) DeleteGroup(id string, ctx *gin.Context) *models.ErrorResponse {
 	// Parse the UUID from the string
 	db, err := r.getDB(ctx)
-	defer r.db.Close(ctx.GetString("dbName"))
 
 	if err != nil {
 		return models.InternalServerError(err.Error())

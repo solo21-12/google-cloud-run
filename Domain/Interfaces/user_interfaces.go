@@ -44,4 +44,5 @@ type UserRepository interface {
 	AddUserToGroup(req dtos.AddUserToGroupRequest, ctx *gin.Context) *models.ErrorResponse
 	AddUserToRole(req dtos.AddUserToRoleRequest, ctx *gin.Context) *models.ErrorResponse
 	RemoveUserFromGroups(userUID string, groupUIDs []string, ctx *gin.Context) *models.ErrorResponse
+	RemoveUserRole(userID string, ctx *gin.Context) *models.ErrorResponse
 }

@@ -486,6 +486,20 @@ func (mr *MockUserRepositoryMockRecorder) RemoveUserFromGroups(userUID, groupUID
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveUserFromGroups", reflect.TypeOf((*MockUserRepository)(nil).RemoveUserFromGroups), userUID, groupUIDs, ctx)
 }
 
+// RemoveUserRole mocks base method.
+func (m *MockUserRepository) RemoveUserRole(userID string, ctx *gin.Context) *models.ErrorResponse {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RemoveUserRole", userID, ctx)
+	ret0, _ := ret[0].(*models.ErrorResponse)
+	return ret0
+}
+
+// RemoveUserRole indicates an expected call of RemoveUserRole.
+func (mr *MockUserRepositoryMockRecorder) RemoveUserRole(userID, ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveUserRole", reflect.TypeOf((*MockUserRepository)(nil).RemoveUserRole), userID, ctx)
+}
+
 // SearchUsers mocks base method.
 func (m *MockUserRepository) SearchUsers(searchFields dtos.SearchFields, ctx *gin.Context) ([]*dtos.UserResponseAll, *models.ErrorResponse) {
 	m.ctrl.T.Helper()

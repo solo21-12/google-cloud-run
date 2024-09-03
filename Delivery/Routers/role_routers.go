@@ -10,8 +10,8 @@ import (
 
 func NewRoleRouter(env config.Env, router *gin.RouterGroup) {
 
-	roleRepo := repository.NewRoleRepository()
-	userRepo := repository.NewUserRepository()
+	roleRepo := repository.NewRoleRepository(&env)
+	userRepo := repository.NewUserRepository(&env)
 	roleUseCase := usecases.NewRoleUseCase(roleRepo, userRepo)
 	roleHandler := controllers.NewRoleController(roleUseCase)
 
