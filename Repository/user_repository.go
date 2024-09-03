@@ -32,10 +32,10 @@ func (r *userRepository) getDB(ctx *gin.Context) (*gorm.DB, error) {
 
 func (r *userRepository) GetAllUsers(ctx *gin.Context) ([]*dtos.UserResponseAll, *models.ErrorResponse) {
 	db, err := r.getDB(ctx)
-
 	if err != nil {
 		return nil, models.InternalServerError(err.Error())
 	}
+
 	var users []*models.User
 	if err := db.WithContext(ctx).Preload("Groups").Preload("Role").Find(&users).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -46,19 +46,26 @@ func (r *userRepository) GetAllUsers(ctx *gin.Context) ([]*dtos.UserResponseAll,
 
 	var result []*dtos.UserResponseAll
 	for _, user := range users {
+		var roleResponse *dtos.RoleResponseNoRight
+		if user.Role != nil {
+			roleResponse = &dtos.RoleResponseNoRight{
+				UID:  user.Role.UID.String(),
+				Name: user.Role.Name,
+			}
+		}
+
 		result = append(result, &dtos.UserResponseAll{
 			UID:    user.UID.String(),
 			Name:   user.Name,
 			Email:  user.Email,
 			Status: user.Status,
-			Role: &dtos.RoleResponseNoRight{
-				UID:  user.Role.UID.String(),
-				Name: user.Role.Name,
-			},
+			Role:   roleResponse,  // roleResponse will be nil if the user has no role
 		})
 	}
+
 	return result, nil
 }
+
 
 func (r *userRepository) GetUserById(uid string, ctx *gin.Context) (*dtos.UserResponseSingle, *models.ErrorResponse) {
 	db, err := r.getDB(ctx)
