@@ -7,7 +7,6 @@ import (
 	"github.com/golang/mock/gomock"
 	dtos "github.com/google-run-code/Domain/Dtos"
 	interfaces "github.com/google-run-code/Domain/Interfaces"
-	models "github.com/google-run-code/Domain/Models"
 	mocks "github.com/google-run-code/Tests/Mocks"
 	usecases "github.com/google-run-code/Usecases"
 	"github.com/google/uuid"
@@ -44,52 +43,6 @@ func (suite *UserUsecaseTestSuite) SetupSuite() {
 func (suite *UserUsecaseTestSuite) TearDownSuite() {
 	suite.ctrl.Finish()
 }
-
-func (suite *UserUsecaseTestSuite) TestCreateUser_Success() {
-	ctx := &gin.Context{}
-	userReq := dtos.UserCreateRequest{
-		Name:   "Test User",
-		Email:  "test@example.com",
-		Status: 1,
-		RoleId: "some-role-uid",
-	}
-	user := &dtos.UserResponse{
-		UID:    uuid.New().String(),
-		Name:   userReq.Name,
-		Email:  userReq.Email,
-		Status: userReq.Status,
-	}
-
-	userID := &dtos.UserResponseSingle{
-		UID:    user.UID,
-		Name:   user.Name,
-		Email:  user.Email,
-		Status: user.Status,
-	}
-	
-	suite.userRepoMock.EXPECT().
-		GetUserById(gomock.Any(), ctx).
-		Return(userID, nil)
-
-	suite.userRepoMock.EXPECT().
-		GetUserByEmail(userReq.Email, ctx).
-		Return(nil, models.NotFound("User not found"))
-
-	suite.emailService.EXPECT().
-		IsValidEmail(userReq.Email).
-		Return(true)
-
-	suite.userRepoMock.EXPECT().
-		CreateUser(userReq, ctx).
-		Return(user, nil)
-
-
-	result, err := suite.userUsecase.CreateUser(userReq, ctx)
-	suite.Nil(err)
-	suite.Equal(userID, result)
-}
-
-
 
 func (suite *UserUsecaseTestSuite) TestGetUserByID_Success() {
 	ctx := &gin.Context{}

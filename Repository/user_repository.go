@@ -59,7 +59,7 @@ func (r *userRepository) GetAllUsers(ctx *gin.Context) ([]*dtos.UserResponseAll,
 			Name:   user.Name,
 			Email:  user.Email,
 			Status: user.Status,
-			Role:   roleResponse, // roleResponse will be nil if the user has no role
+			Role:   roleResponse,
 		})
 	}
 
