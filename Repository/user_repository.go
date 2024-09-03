@@ -15,7 +15,6 @@ type userRepository struct {
 }
 
 func NewUserRepository(dbConfig *config.PostgresConfig) interfaces.UserRepository {
-
 	return &userRepository{
 		dbConfig: dbConfig,
 	}

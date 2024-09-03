@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	middleware "github.com/google-run-code/Delivery/Middlewares"
+	models "github.com/google-run-code/Domain/Models"
 	infrastructure "github.com/google-run-code/Infrastructure"
 	"github.com/google-run-code/config"
 )
@@ -25,6 +26,12 @@ func SetUp() {
 	}
 
 	dbConfig.InitializeConnections(dbNames)
+
+	for _, dbname := range dbNames {
+		dbConfig.Migrate(dbname, &models.User{}, &models.Role{}, &models.Group{})
+	}
+
+	log.Println(dbNames, "dbname")
 
 	jwtService := infrastructure.NewJwtService(env)
 	middleware := middleware.DatabaseMiddleware(env, jwtService)

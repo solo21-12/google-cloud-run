@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"sync"
-	"time"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -35,15 +34,6 @@ func (p *PostgresConfig) InitializeConnections(databaseNames []string) {
 			log.Fatalf("Failed to connect to database %s: %v", dbName, err)
 		}
 
-		sqlDB, err := db.DB()
-		if err != nil {
-			log.Fatalf("Failed to configure database %s: %v", dbName, err)
-		}
-
-		sqlDB.SetMaxOpenConns(25)
-		sqlDB.SetMaxIdleConns(10)
-		sqlDB.SetConnMaxLifetime(30 * time.Minute)
-
 		p.mu.Lock()
 		p.dbs[dbName] = db
 		p.mu.Unlock()
@@ -71,4 +61,37 @@ func (p *PostgresConfig) GetDB(databaseName string) (*gorm.DB, error) {
 	}
 
 	return db, nil
+}
+
+func (p *PostgresConfig) Client(databaseName string) *gorm.DB {
+	p.mu.RLock()
+	db, exists := p.dbs[databaseName]
+	p.mu.RUnlock()
+
+	if !exists {
+		p.mu.Lock()
+		defer p.mu.Unlock()
+
+		db, exists = p.dbs[databaseName]
+		if !exists {
+			dsn := p.BuildDBURL(databaseName)
+			var err error
+			db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+			if err != nil {
+				log.Fatalf("Failed to connect to database: %v", err)
+			}
+
+			p.dbs[databaseName] = db
+		}
+	}
+
+	return db
+}
+
+func (p *PostgresConfig) Migrate(databaseName string, models ...interface{}) {
+	db := p.Client(databaseName)
+	err := db.AutoMigrate(models...)
+	if err != nil {
+		log.Fatalf("Failed to migrate database schema: %v", err)
+	}
 }
