@@ -58,7 +58,7 @@ func (gc *groupController) CreateGroup(c *gin.Context) {
 	var group dtos.GroupCreateRequest
 
 	if err := c.ShouldBindJSON(&group); err != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "one or more required fields are missing"})
 		return
 	}
 

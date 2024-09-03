@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator"
 	dtos "github.com/google-run-code/Domain/Dtos"
 	interfaces "github.com/google-run-code/Domain/Interfaces"
 	models "github.com/google-run-code/Domain/Models"
@@ -99,7 +100,7 @@ func (uc *userController) handleCreateOrUpdateUser(c *gin.Context, isUpdate bool
 	}
 
 	if err := c.ShouldBindJSON(&userRequest); err != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "one or more fields are missing"})
 		return
 	}
 
@@ -148,7 +149,7 @@ func (uc *userController) DeleteUser(c *gin.Context) {
 func (uc *userController) AddUserToGroup(c *gin.Context) {
 	var req dtos.AddUserToGroupRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "one or more fields are missing"})
 		return
 	}
 
@@ -164,32 +165,18 @@ func (uc *userController) AddUserToGroup(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, gin.H{"message": msg})
 }
 
-func (uc *userController) AddUserToRole(c *gin.Context) {
-	var req dtos.AddUserToRoleRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	id := c.Param("id")
-	req.UserUID = id
-
-	err := uc.usecase.AddUserToRole(req, c)
-
-	if err != nil {
-		c.IndentedJSON(err.Code, gin.H{"error": err.Message})
-		return
-	}
-
-	c.IndentedJSON(http.StatusOK, gin.H{"message": "User added to role"})
-}
-
 func (uc *userController) DeletetUserFromGroup(c *gin.Context) {
 	var req dtos.RemoveUserFromGroupRequest
 
 	id := c.Param("id")
 
 	if err := c.ShouldBind(&req); err != nil {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	validator := validator.New()
+	if err := validator.Struct(req); err != nil {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -205,4 +192,3 @@ func (uc *userController) DeletetUserFromGroup(c *gin.Context) {
 
 	c.IndentedJSON(http.StatusOK, gin.H{"Message": msg})
 }
-

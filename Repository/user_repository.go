@@ -5,15 +5,19 @@ import (
 	dtos "github.com/google-run-code/Domain/Dtos"
 	interfaces "github.com/google-run-code/Domain/Interfaces"
 	models "github.com/google-run-code/Domain/Models"
+	"github.com/google-run-code/config"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 type userRepository struct {
+	db config.PostgresConfig
 }
 
-func NewUserRepository() interfaces.UserRepository {
-	return &userRepository{}
+func NewUserRepository(env *config.Env) interfaces.UserRepository {
+	return &userRepository{
+		db: *config.NewPostgresConfig(*env),
+	}
 }
 
 func (r *userRepository) getDB(ctx *gin.Context) (*gorm.DB, error) {
@@ -32,6 +36,8 @@ func (r *userRepository) getDB(ctx *gin.Context) (*gorm.DB, error) {
 
 func (r *userRepository) GetAllUsers(ctx *gin.Context) ([]*dtos.UserResponseAll, *models.ErrorResponse) {
 	db, err := r.getDB(ctx)
+	defer r.db.Close(ctx.GetString("dbName"))
+
 	if err != nil {
 		return nil, models.InternalServerError(err.Error())
 	}
@@ -68,6 +74,7 @@ func (r *userRepository) GetAllUsers(ctx *gin.Context) ([]*dtos.UserResponseAll,
 
 func (r *userRepository) GetUserById(uid string, ctx *gin.Context) (*dtos.UserResponseSingle, *models.ErrorResponse) {
 	db, err := r.getDB(ctx)
+	defer r.db.Close(ctx.GetString("dbName"))
 
 	if err != nil {
 		return nil, models.InternalServerError(err.Error())
@@ -113,6 +120,7 @@ func (r *userRepository) GetUserById(uid string, ctx *gin.Context) (*dtos.UserRe
 
 func (r *userRepository) GetUserByEmail(email string, ctx *gin.Context) (*models.User, *models.ErrorResponse) {
 	db, err := r.getDB(ctx)
+	defer r.db.Close(ctx.GetString("dbName"))
 
 	if err != nil {
 		return nil, models.InternalServerError(err.Error())
@@ -132,6 +140,7 @@ func (r *userRepository) GetUserByEmail(email string, ctx *gin.Context) (*models
 func (r *userRepository) GetUsersGroups(uid string, ctx *gin.Context) ([]*dtos.GroupResponse, *models.ErrorResponse) {
 	var user models.User
 	db, err := r.getDB(ctx)
+	defer r.db.Close(ctx.GetString("dbName"))
 
 	if err != nil {
 		return nil, models.InternalServerError(err.Error())
@@ -206,6 +215,7 @@ func (repo *userRepository) SearchUsers(searchFields dtos.SearchFields, ctx *gin
 
 func (r *userRepository) CreateUser(user dtos.UserCreateRequest, ctx *gin.Context) (*dtos.UserResponse, *models.ErrorResponse) {
 	db, err := r.getDB(ctx)
+	defer r.db.Close(ctx.GetString("dbName"))
 
 	if err != nil {
 		return nil, models.InternalServerError(err.Error())
@@ -232,6 +242,7 @@ func (r *userRepository) CreateUser(user dtos.UserCreateRequest, ctx *gin.Contex
 func (r *userRepository) UpdateUser(uid string, user *dtos.UserUpdateRequest, ctx *gin.Context) (*dtos.UserResponseSingle, *models.ErrorResponse) {
 	var existingUser models.User
 	db, err := r.getDB(ctx)
+	defer r.db.Close(ctx.GetString("dbName"))
 
 	if err != nil {
 		return nil, models.InternalServerError(err.Error())
@@ -275,6 +286,7 @@ func (r *userRepository) UpdateUser(uid string, user *dtos.UserUpdateRequest, ct
 func (r *userRepository) DeleteUser(uid string, ctx *gin.Context) *models.ErrorResponse {
 	var existingUser models.User
 	db, err := r.getDB(ctx)
+	defer r.db.Close(ctx.GetString("dbName"))
 
 	if err != nil {
 		return models.InternalServerError(err.Error())
@@ -306,6 +318,7 @@ func (r *userRepository) DeleteUser(uid string, ctx *gin.Context) *models.ErrorR
 
 func (r *userRepository) AddUserToGroup(req dtos.AddUserToGroupRequest, ctx *gin.Context) *models.ErrorResponse {
 	db, err := r.getDB(ctx)
+	defer r.db.Close(ctx.GetString("dbName"))
 
 	if err != nil {
 		return models.InternalServerError(err.Error())

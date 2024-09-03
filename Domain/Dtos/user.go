@@ -1,8 +1,8 @@
 package dtos
 
 type UserCreateRequest struct {
-	Name   string `json:"name"`
-	Email  string `json:"email"`
+	Name   string `json:"name" binding:"required"`
+	Email  string `json:"email" binding:"required"`
 	Status int    `json:"status"`
 	RoleId string `json:"role_id"`
 }
@@ -17,12 +17,12 @@ type UserUpdateRequest struct {
 
 type AddUserToGroupRequest struct {
 	UserUID  string   `json:"UserUID"`
-	GroupIds []string `json:"group_ids"`
+	GroupIds []string `json:"group_ids" binding:"required"`
 }
 
 type AddUserToRoleRequest struct {
 	UserUID string `json:"UserUID"`
-	RoleId  string `json:"role_id"`
+	RoleId  string `json:"role_id" binding:"required"`
 }
 
 type UserResponse struct {
@@ -58,5 +58,5 @@ type SearchFields struct {
 
 type RemoveUserFromGroupRequest struct {
 	UserUID  string   `json:"UserUID"`
-	GroupIds []string `json:"group_ids"`
+	GroupIds []string `json:"group_ids" binding:"required"`
 }

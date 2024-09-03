@@ -8,13 +8,18 @@ import (
 	dtos "github.com/google-run-code/Domain/Dtos"
 	interfaces "github.com/google-run-code/Domain/Interfaces"
 	models "github.com/google-run-code/Domain/Models"
+	"github.com/google-run-code/config"
 )
 
 type GroupRepository struct {
+	db config.PostgresConfig
 }
 
-func NewGroupRepository() interfaces.GroupRepository {
-	return &GroupRepository{}
+func NewGroupRepository(env *config.Env) interfaces.GroupRepository {
+	return &GroupRepository{
+		db: *config.NewPostgresConfig(*env),
+
+	}
 }
 
 func (r *GroupRepository) getDB(ctx *gin.Context) (*gorm.DB, error) {
@@ -35,6 +40,7 @@ func (r *GroupRepository) getDB(ctx *gin.Context) (*gorm.DB, error) {
 func (r *GroupRepository) GetAllGroups(ctx *gin.Context) ([]*dtos.GroupResponse, *models.ErrorResponse) {
 	var groups []*models.Group
 	db, err := r.getDB(ctx)
+	defer r.db.Close(ctx.GetString("dbName"))
 
 	if err != nil {
 		return nil, models.InternalServerError(err.Error())
@@ -62,6 +68,7 @@ func (r *GroupRepository) GetAllGroups(ctx *gin.Context) ([]*dtos.GroupResponse,
 func (r *GroupRepository) GetGroupById(UID string, ctx *gin.Context) (*dtos.GroupResponse, *models.ErrorResponse) {
 	var group models.Group
 	db, err := r.getDB(ctx)
+	defer r.db.Close(ctx.GetString("dbName"))
 
 	if err != nil {
 		return nil, models.InternalServerError(err.Error())
@@ -86,6 +93,7 @@ func (r *GroupRepository) GetGroupById(UID string, ctx *gin.Context) (*dtos.Grou
 func (r *GroupRepository) GetGroupUsers(UID string, ctx *gin.Context) ([]dtos.UserResponse, *models.ErrorResponse) {
 	var group models.Group
 	db, err := r.getDB(ctx)
+	defer r.db.Close(ctx.GetString("dbName"))
 
 	if err != nil {
 		return nil, models.InternalServerError(err.Error())
@@ -118,6 +126,7 @@ func (r *GroupRepository) GetGroupUsers(UID string, ctx *gin.Context) ([]dtos.Us
 func (r *GroupRepository) GetGroupByName(name string, ctx *gin.Context) (*dtos.GroupResponse, *models.ErrorResponse) {
 	var group models.Group
 	db, err := r.getDB(ctx)
+	defer r.db.Close(ctx.GetString("dbName"))
 
 	if err != nil {
 		return nil, models.InternalServerError(err.Error())
@@ -139,6 +148,7 @@ func (r *GroupRepository) GetGroupByName(name string, ctx *gin.Context) (*dtos.G
 
 func (r *GroupRepository) CreateGroup(group dtos.GroupCreateRequest, ctx *gin.Context) (*dtos.GroupResponse, *models.ErrorResponse) {
 	db, err := r.getDB(ctx)
+	defer r.db.Close(ctx.GetString("dbName"))
 
 	if err != nil {
 		return nil, models.InternalServerError(err.Error())
@@ -160,6 +170,7 @@ func (r *GroupRepository) CreateGroup(group dtos.GroupCreateRequest, ctx *gin.Co
 func (r *GroupRepository) UpdateGroup(UID string, group dtos.GroupUpdateRequest, ctx *gin.Context) (*dtos.GroupResponse, *models.ErrorResponse) {
 	var existingGroup models.Group
 	db, err := r.getDB(ctx)
+	defer r.db.Close(ctx.GetString("dbName"))
 
 	if err != nil {
 		return nil, models.InternalServerError(err.Error())
@@ -183,6 +194,7 @@ func (r *GroupRepository) UpdateGroup(UID string, group dtos.GroupUpdateRequest,
 func (r *GroupRepository) DeleteGroup(id string, ctx *gin.Context) *models.ErrorResponse {
 	// Parse the UUID from the string
 	db, err := r.getDB(ctx)
+	defer r.db.Close(ctx.GetString("dbName"))
 
 	if err != nil {
 		return models.InternalServerError(err.Error())

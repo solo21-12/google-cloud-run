@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -46,11 +45,9 @@ func (rc *roleController) CreateRole(c *gin.Context) {
 	var role dtos.RoleCreateRequest
 
 	if err := c.ShouldBindJSON(&role); err != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "one or more required fields are missing"})
 		return
 	}
-
-	log.Println(role, "role")
 
 	createdRole, errResp := rc.roleUsecase.CreateRole(role, c)
 
@@ -73,7 +70,6 @@ func (rc *roleController) UpdateRole(c *gin.Context) {
 	}
 
 	updatedRole, errResp := rc.roleUsecase.UpdateRole(id, role, c)
-
 	if errResp != nil {
 		c.IndentedJSON(errResp.Code, gin.H{"error": errResp.Message})
 		return

@@ -51,6 +51,7 @@ func DatabaseMiddleware(env *config.Env, jwtService interfaces.JwtService) gin.H
 		db.Migrate(dbName, models.User{}, models.Role{}, models.Group{})
 
 		c.Set("dbClient", client)
+		c.Set("dbName", dbName)
 		c.Next()
 	}
 }

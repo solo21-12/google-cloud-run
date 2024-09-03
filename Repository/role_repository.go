@@ -10,13 +10,17 @@ import (
 	dtos "github.com/google-run-code/Domain/Dtos"
 	interfaces "github.com/google-run-code/Domain/Interfaces"
 	models "github.com/google-run-code/Domain/Models"
+	"github.com/google-run-code/config"
 )
 
 type roleRepository struct {
+	db config.PostgresConfig
 }
 
-func NewRoleRepository() interfaces.RoleRepository {
-	return &roleRepository{}
+func NewRoleRepository(env *config.Env) interfaces.RoleRepository {
+	return &roleRepository{
+		db: *config.NewPostgresConfig(*env),
+	}
 }
 
 func (r *roleRepository) getDB(ctx *gin.Context) (*gorm.DB, error) {
@@ -37,6 +41,7 @@ func (r *roleRepository) getDB(ctx *gin.Context) (*gorm.DB, error) {
 func (r *roleRepository) GetAllRoles(ctx *gin.Context) ([]*dtos.RoleResponse, *models.ErrorResponse) {
 	var roles []*models.Role
 	db, err := r.getDB(ctx)
+	defer r.db.Close(ctx.GetString("dbName"))
 
 	if err != nil {
 		return nil, models.InternalServerError(err.Error())
@@ -65,6 +70,7 @@ func (r *roleRepository) GetRoleById(uid string, ctx *gin.Context) (*dtos.RoleRe
 
 	var role models.Role
 	db, err := r.getDB(ctx)
+	defer r.db.Close(ctx.GetString("dbName"))
 
 	if err != nil {
 		return nil, models.InternalServerError(err.Error())
@@ -88,6 +94,7 @@ func (r *roleRepository) GetRoleById(uid string, ctx *gin.Context) (*dtos.RoleRe
 
 func (r *roleRepository) CreateRole(role dtos.RoleCreateRequest, ctx *gin.Context) (*dtos.RoleResponse, *models.ErrorResponse) {
 	db, err := r.getDB(ctx)
+	defer r.db.Close(ctx.GetString("dbName"))
 
 	if err != nil {
 		return nil, models.InternalServerError(err.Error())
@@ -111,6 +118,7 @@ func (r *roleRepository) CreateRole(role dtos.RoleCreateRequest, ctx *gin.Contex
 
 func (r *roleRepository) UpdateRole(uid string, role dtos.RoleUpdateRequest, ctx *gin.Context) (*dtos.RoleResponse, *models.ErrorResponse) {
 	db, err := r.getDB(ctx)
+	defer r.db.Close(ctx.GetString("dbName"))
 
 	if err != nil {
 		return nil, models.InternalServerError(err.Error())
@@ -141,6 +149,7 @@ func (r *roleRepository) UpdateRole(uid string, role dtos.RoleUpdateRequest, ctx
 
 func (r *roleRepository) DeleteRole(UID string, ctx *gin.Context) *models.ErrorResponse {
 	db, err := r.getDB(ctx)
+	defer r.db.Close(ctx.GetString("dbName"))
 
 	if err != nil {
 		return models.InternalServerError(err.Error())
@@ -178,6 +187,7 @@ func (r *roleRepository) DeleteRole(UID string, ctx *gin.Context) *models.ErrorR
 func (r *roleRepository) GetRoleUsers(role *dtos.RoleResponse, ctx *gin.Context) ([]*dtos.UserResponse, *models.ErrorResponse) {
 	var roleModel models.Role
 	db, err := r.getDB(ctx)
+	defer r.db.Close(ctx.GetString("dbName"))
 
 	if err != nil {
 		return nil, models.InternalServerError(err.Error())
@@ -211,6 +221,7 @@ func (r *roleRepository) GetRoleUsers(role *dtos.RoleResponse, ctx *gin.Context)
 func (r *roleRepository) GetRoleByNameAndRights(rol dtos.RoleCreateRequest, ctx *gin.Context) (*models.Role, *models.ErrorResponse) {
 	var role models.Role
 	db, err := r.getDB(ctx)
+	defer r.db.Close(ctx.GetString("dbName"))
 
 	if err != nil {
 		return nil, models.InternalServerError(err.Error())
