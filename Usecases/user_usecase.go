@@ -70,7 +70,19 @@ func (uc *userUseCase) CreateUser(user dtos.UserCreateRequest, ctx *gin.Context)
 		return nil, err
 	}
 
+	if user.RoleId != "" {
+		if _, err := uc.roleRepo.GetRoleById(user.RoleId, ctx); err != nil {
+			return nil, models.NotFound("Role not found")
+		}
+
+	}
 	newUser, nErr := uc.userRepo.CreateUser(user, ctx)
+	if err := uc.AddUserToRole(dtos.AddUserToRoleRequest{
+		UserUID: newUser.UID,
+		RoleId:  user.RoleId,
+	}, ctx); err != nil {
+		return nil, err
+	}
 
 	if nErr != nil {
 		return nil, nErr

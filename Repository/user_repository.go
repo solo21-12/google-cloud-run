@@ -59,13 +59,12 @@ func (r *userRepository) GetAllUsers(ctx *gin.Context) ([]*dtos.UserResponseAll,
 			Name:   user.Name,
 			Email:  user.Email,
 			Status: user.Status,
-			Role:   roleResponse,  // roleResponse will be nil if the user has no role
+			Role:   roleResponse, // roleResponse will be nil if the user has no role
 		})
 	}
 
 	return result, nil
 }
-
 
 func (r *userRepository) GetUserById(uid string, ctx *gin.Context) (*dtos.UserResponseSingle, *models.ErrorResponse) {
 	db, err := r.getDB(ctx)
@@ -218,19 +217,9 @@ func (r *userRepository) CreateUser(user dtos.UserCreateRequest, ctx *gin.Contex
 		Email:  user.Email,
 		Status: user.Status,
 	}
+
 	if err := db.WithContext(ctx).Create(&newUser).Error; err != nil {
 		return nil, models.InternalServerError(err.Error())
-	}
-
-	if user.RoleId != "" {
-		roles := dtos.AddUserToRoleRequest{
-			UserUID: newUser.UID.String(),
-			RoleId:  user.RoleId,
-		}
-		if err := r.AddUserToRole(roles, ctx); err != nil {
-			return nil, err
-		}
-
 	}
 	return &dtos.UserResponse{
 		UID:    newUser.UID.String(),
