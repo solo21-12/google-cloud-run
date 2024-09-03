@@ -8,9 +8,9 @@ import (
 	"github.com/google-run-code/config"
 )
 
-func NewGroupRouter(env config.Env, router *gin.RouterGroup) {
+func NewGroupRouter(env config.Env, router *gin.RouterGroup, dbConfig *config.PostgresConfig) {
 
-	groupRepo := repository.NewGroupRepository(&env)
+	groupRepo := repository.NewGroupRepository(dbConfig)
 	groupUseCase := usecases.NewGroupUseCase(groupRepo)
 	groupHandler := controllers.NewGroupController(groupUseCase)
 

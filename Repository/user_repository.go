@@ -11,25 +11,23 @@ import (
 )
 
 type userRepository struct {
-	db  *gorm.DB
-	env config.Env
+	dbConfig *config.PostgresConfig
 }
 
-func NewUserRepository(env *config.Env) interfaces.UserRepository {
-	dbConfig := config.NewPostgresConfig(*env)
-	db := dbConfig.Client("") // Initialize with a default or no database
+func NewUserRepository(dbConfig *config.PostgresConfig) interfaces.UserRepository {
 
 	return &userRepository{
-		db:  db,
-		env: *env,
+		dbConfig: dbConfig,
 	}
 }
 
 func (r *userRepository) getDB(ctx *gin.Context) (*gorm.DB, error) {
 	dbName := ctx.GetString("dbName")
-	// Assuming NewPostgresConfig supports changing databases dynamically
-	dbConfig := config.NewPostgresConfig(r.env)
-	db := dbConfig.Client(dbName)
+	db, ok := r.dbConfig.GetDB(dbName)
+	if ok != nil {
+		return nil, models.InternalServerError("Failed to get database connection")
+	}
+
 	return db, nil
 }
 

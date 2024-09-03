@@ -8,10 +8,10 @@ import (
 	"github.com/google-run-code/config"
 )
 
-func NewRoleRouter(env config.Env, router *gin.RouterGroup) {
+func NewRoleRouter(env config.Env, router *gin.RouterGroup,  dbConfig *config.PostgresConfig) {
 
-	roleRepo := repository.NewRoleRepository(&env)
-	userRepo := repository.NewUserRepository(&env)
+	roleRepo := repository.NewRoleRepository(dbConfig)
+	userRepo := repository.NewUserRepository(dbConfig)
 	roleUseCase := usecases.NewRoleUseCase(roleRepo, userRepo)
 	roleHandler := controllers.NewRoleController(roleUseCase)
 

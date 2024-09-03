@@ -9,11 +9,11 @@ import (
 	"github.com/google-run-code/config"
 )
 
-func NewUserRouter(env config.Env, router *gin.RouterGroup) {
+func NewUserRouter(env config.Env, router *gin.RouterGroup , dbConfig *config.PostgresConfig) {
 
-	userRepo := repository.NewUserRepository(&env)
-	roleRepo := repository.NewRoleRepository(&env)
-	groupRepo := repository.NewGroupRepository(&env)
+	userRepo := repository.NewUserRepository(dbConfig)
+	roleRepo := repository.NewRoleRepository(dbConfig)
+	groupRepo := repository.NewGroupRepository(dbConfig)
 	emailService := infrastructure.NewEmailService(env)
 
 	userUseCase := usecases.NewUserUseCase(userRepo, emailService, roleRepo, groupRepo)

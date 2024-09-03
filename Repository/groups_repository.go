@@ -12,24 +12,22 @@ import (
 )
 
 type groupRepository struct {
-	db  *gorm.DB
-	env config.Env
+	dbConfig *config.PostgresConfig
 }
 
-func NewGroupRepository(env *config.Env) interfaces.GroupRepository {
-	dbConfig := config.NewPostgresConfig(*env)
-	db := dbConfig.Client("") 
-
+func NewGroupRepository(dbConfig *config.PostgresConfig) interfaces.GroupRepository {
 	return &groupRepository{
-		db:  db,
-		env: *env,
+		dbConfig: dbConfig,
 	}
 }
 
 func (r *groupRepository) getDB(ctx *gin.Context) (*gorm.DB, error) {
 	dbName := ctx.GetString("dbName")
-	dbConfig := config.NewPostgresConfig(r.env)
-	db := dbConfig.Client(dbName)
+	db, ok := r.dbConfig.GetDB(dbName)
+	if ok != nil {
+		return nil, models.InternalServerError("Failed to get database connection")
+	}
+
 	return db, nil
 }
 

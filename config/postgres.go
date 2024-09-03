@@ -3,6 +3,8 @@ package config
 import (
 	"fmt"
 	"log"
+	"sync"
+	"time"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -10,15 +12,42 @@ import (
 
 type PostgresConfig struct {
 	env Env
-	db  *gorm.DB
+	dbs map[string]*gorm.DB
+	mu  sync.RWMutex
 }
 
 func NewPostgresConfig(env Env) *PostgresConfig {
-	return &PostgresConfig{env: env}
+	return &PostgresConfig{
+		env: env,
+		dbs: make(map[string]*gorm.DB),
+	}
 }
 
 func (p *PostgresConfig) isValid() bool {
 	return p.env.DB_USER != "" && p.env.DB_PASS != "" && p.env.DB_HOST != "" && p.env.DB_PORT != ""
+}
+
+func (p *PostgresConfig) InitializeConnections(databaseNames []string) {
+	for _, dbName := range databaseNames {
+		dsn := p.BuildDBURL(dbName)
+		db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+		if err != nil {
+			log.Fatalf("Failed to connect to database %s: %v", dbName, err)
+		}
+
+		sqlDB, err := db.DB()
+		if err != nil {
+			log.Fatalf("Failed to configure database %s: %v", dbName, err)
+		}
+
+		sqlDB.SetMaxOpenConns(25)
+		sqlDB.SetMaxIdleConns(10)
+		sqlDB.SetConnMaxLifetime(30 * time.Minute)
+
+		p.mu.Lock()
+		p.dbs[dbName] = db
+		p.mu.Unlock()
+	}
 }
 
 func (p *PostgresConfig) BuildDBURL(databaseName string) string {
@@ -32,37 +61,14 @@ func (p *PostgresConfig) BuildDBURL(databaseName string) string {
 	return dsn
 }
 
-func (p *PostgresConfig) Client(databaseName string) *gorm.DB {
-	if p.db != nil {
-		return p.db
+func (p *PostgresConfig) GetDB(databaseName string) (*gorm.DB, error) {
+	p.mu.RLock()
+	db, exists := p.dbs[databaseName]
+	p.mu.RUnlock()
+
+	if !exists {
+		return nil, fmt.Errorf("database connection for %s not initialized", databaseName)
 	}
 
-	dsn := p.BuildDBURL(databaseName)
-	var err error
-	p.db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
-	if err != nil {
-		log.Fatalf("Failed to connect to database: %v", err)
-	}
-
-	return p.db
-}
-
-func (p *PostgresConfig) Close(databaseName string) {
-	sqlDB, err := p.Client(databaseName).DB()
-	if err != nil {
-		log.Fatalf("Failed to get database instance: %v", err)
-	}
-
-	err = sqlDB.Close()
-	if err != nil {
-		log.Fatalf("Failed to close database: %v", err)
-	}
-}
-
-func (p *PostgresConfig) Migrate(databaseName string, models ...interface{}) {
-	db := p.Client(databaseName)
-	err := db.AutoMigrate(models...)
-	if err != nil {
-		log.Fatalf("Failed to migrate database schema: %v", err)
-	}
+	return db, nil
 }
