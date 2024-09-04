@@ -31,16 +31,16 @@ func SetUp() {
 		dbConfig.Migrate(dbname, &models.User{}, &models.Role{}, &models.Group{})
 	}
 
-	log.Println(dbNames, "dbname")
-
 	jwtService := infrastructure.NewJwtService(env)
-	middleware := middleware.DatabaseMiddleware(env, jwtService)
+	db_middleware := middleware.DatabaseMiddleware(env, jwtService)
+	logging_middleware := middleware.Logger()
 
 	router := gin.Default()
 
 	public := router.Group("")
+	public.Use(logging_middleware)
 	protected := public.Group("")
-	protected.Use(middleware)
+	protected.Use(db_middleware)
 	NewUserRouter(*env, protected, dbConfig)
 	NewGroupRouter(*env, protected, dbConfig)
 	NewRoleRouter(*env, protected, dbConfig)

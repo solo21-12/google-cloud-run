@@ -28,6 +28,7 @@ services:
       DB_USER: myuser
       DB_PASS: mypassword
       JWT_SECRET: a79d500a2faeaef062cafa91495cca25369c9a46d72e8300dd6f6c37f9de0ac8
+      DB_NAMES: mydb
 
 volumes:
   postgres_data:

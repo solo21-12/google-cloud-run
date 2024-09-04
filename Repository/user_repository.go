@@ -24,7 +24,7 @@ func (r *userRepository) getDB(ctx *gin.Context) (*gorm.DB, error) {
 	dbName := ctx.GetString("dbName")
 	db, ok := r.dbConfig.GetDB(dbName)
 	if ok != nil {
-		return nil, models.InternalServerError("Failed to get database connection")
+		return nil, models.InternalServerError("Failed to get database connection: " + ok.Error())
 	}
 
 	return db, nil
