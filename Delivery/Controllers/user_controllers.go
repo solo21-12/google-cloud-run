@@ -64,7 +64,7 @@ func (uc *userController) GetUsers(c *gin.Context) {
 	}
 
 	if len(users) == 0 {
-		c.IndentedJSON(http.StatusNotFound, []string{})
+		c.IndentedJSON(http.StatusOK, []string{})
 
 		return
 	}
@@ -90,6 +90,11 @@ func (uc *userController) GetUsersGroup(c *gin.Context) {
 
 	if err != nil {
 		c.IndentedJSON(err.Code, gin.H{"error": err.Message})
+		return
+	}
+
+	if len(users) == 0 {
+		c.IndentedJSON(http.StatusOK, []string{})
 		return
 	}
 

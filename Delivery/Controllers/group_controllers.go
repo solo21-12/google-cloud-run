@@ -27,7 +27,7 @@ func (gc *groupController) GetAllGroups(c *gin.Context) {
 	}
 
 	if len(groups) == 0 {
-		c.IndentedJSON(http.StatusNotFound, []string{})
+		c.IndentedJSON(http.StatusOK, []string{})
 		return
 	}
 
@@ -53,6 +53,11 @@ func (gc *groupController) GetGroupUsers(c *gin.Context) {
 
 	if errResp != nil {
 		c.IndentedJSON(errResp.Code, gin.H{"error": errResp.Message})
+		return
+	}
+
+	if len(users) == 0 {
+		c.IndentedJSON(http.StatusOK, []string{})
 		return
 	}
 

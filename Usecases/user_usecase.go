@@ -115,7 +115,7 @@ func (uc *userUseCase) UpdateUser(id string, user dtos.UserUpdateRequest, ctx *g
 		userToUpdate.Status = *user.Status
 	}
 
-	if user.RoleId != nil {
+	if user.RoleId != nil && *user.RoleId != "" {
 		err := uc.AddUserToRole(dtos.AddUserToRoleRequest{
 			UserUID: userToUpdate.UID,
 			RoleId:  *user.RoleId,
@@ -123,7 +123,7 @@ func (uc *userUseCase) UpdateUser(id string, user dtos.UserUpdateRequest, ctx *g
 		if err != nil {
 			return nil, err
 		}
-	} else {
+	} else if user.RoleId != nil && *user.RoleId == "" {
 		if err := uc.userRepo.RemoveUserRole(userToUpdate.UID, ctx); err != nil {
 			return nil, err
 		}
