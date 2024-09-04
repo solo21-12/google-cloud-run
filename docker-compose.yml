@@ -11,6 +11,9 @@ services:
       - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - mynetwork
+    restart: unless-stopped  
 
   gcr-api:
     build:
@@ -28,9 +31,14 @@ services:
       DB_USER: myuser
       DB_PASS: mypassword
       JWT_SECRET: a79d500a2faeaef062cafa91495cca25369c9a46d72e8300dd6f6c37f9de0ac8
+      DB_NAMES: mydb
+    networks:
+      - mynetwork
+    restart: unless-stopped
 
 volumes:
   postgres_data:
+
 networks:
   mynetwork:
     driver: bridge
