@@ -5,4 +5,4 @@ down:
 up:
 	docker compose up -d --build
 logs:
-	docker compose logs -f
+	docker exec -it gcr-api tail -f /var/log/gcr-api.err.log
